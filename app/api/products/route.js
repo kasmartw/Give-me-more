@@ -1,7 +1,8 @@
-
 import { NextResponse } from "next/server";
-import { readProducts, createProduct, deleteProduct }  from "@/lib/manage-db";
+import { readProducts, createProduct, deleteProduct, updateProductStatus } from "@/lib/manage-db";
 import { isValidProduct } from "@/lib/valid-product";
+
+export const revalidate = 0;
 
 
 export async function GET() {
@@ -10,9 +11,9 @@ export async function GET() {
     return NextResponse.json(products, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? reason.message : 'Unexpected exception'
- 
+
     return new Response(message, { status: 500 })
-  }  
+  }
 }
 
 export async function POST(request) {
@@ -32,16 +33,33 @@ export async function POST(request) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected exception'
- 
+
     return new Response(message, { status: 500 })
-  }  
+  }
+}
+export async function PATCH(request) {
+  try {
+    const { id, status } = await request.json();
+
+    if (typeof id !== 'number' || typeof status !== 'string') {
+      return new Response('Invalid product data', { status: 400 });
+    }
+
+    await updateProductStatus(id, status);
+    return NextResponse.json({ message: "Status updated" }, { status: 200 });
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected exception'
+
+    return new Response(message, { status: 500 })
+  }
 }
 
 export async function DELETE(request) {
   try {
     const formData = await request.formData();
     const id = formData.get("id");
-    if( typeof id === 'number') {
+    if (typeof id === 'number') {
       await deleteProduct(id);
       return NextResponse.json({ status: 200 });
     } else {
@@ -49,7 +67,7 @@ export async function DELETE(request) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected exception'
- 
+
     return new Response(message, { status: 500 });
-  }  
+  }
 }

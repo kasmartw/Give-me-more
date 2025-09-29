@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button"
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -12,13 +13,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertTitle } from "@/components/ui/alert"
-import { redirect } from "next/navigation";
 
 
-
-function FormLogin() {
+function FormSignup() {
     const [value, setValue] = useState({name: "", pass: ""});
-    const [error, setError] = useState("");
+    const [error, setError] = useState("")
     function handleChange(e) {
         setValue({...value, [e.target.name]: e.target.value})
     }
@@ -30,19 +29,16 @@ function FormLogin() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({username: value.name, password: value.pass, id: e.target.id})
         })
-
         const data = await res.json();
-        
-        if (!res.ok) {
-            setError(data.message);
-        } else if (res.ok) {
-            redirect("/admin");
+
+        if(!res.ok){
+            setError(data.message)
         }
     }
     
     return (
         <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-            <div className="flex w-full max-w-sm flex-col gap-3">
+            <div className="flex w-full max-w-sm flex-col gap-6">
                 <a href="#" className="flex items-center gap-2 self-center font-medium">
                     Give me more
                 </a>
@@ -57,12 +53,12 @@ function FormLogin() {
                                 <AlertTitle className="text-center">{error}</AlertTitle>
                             </Alert>
                         )}
-                        <form id="loginForm" onSubmit={(e) => handleSubmit(e)}>
+                        <form id="signupForm" onSubmit={(e) => handleSubmit(e)}>
                             <div className="flex flex-col gap-6">
                                 <div className="grid gap-2">
                                     <Label htmlFor="username">Nombre de usuario</Label>
                                     <Input
-                                        className="w-325px"
+                                        className="w-3/4"
                                         id="username"
                                         type="text"
                                         name="name"
@@ -76,7 +72,7 @@ function FormLogin() {
                                         <Label htmlFor="password">Contraseña</Label>
                                     </div>
                                         <Input 
-                                            className="w-325px" 
+                                            className="w-3/4" 
                                             id="password" 
                                             type="password" 
                                             name="pass"
@@ -89,8 +85,8 @@ function FormLogin() {
                         </form>
                     </CardContent>
                     <CardFooter className="flex-col gap-2">
-                        <Button type="submit" form="loginForm" className="w-full">
-                            Iniciar sesión
+                        <Button type="submit" form="signupForm" className="w-full">
+                            Registrarse
                         </Button>
                     </CardFooter>
                 </Card>
@@ -99,4 +95,4 @@ function FormLogin() {
     )
 }
 
-export default FormLogin
+export default FormSignup
