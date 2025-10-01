@@ -29,8 +29,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import Link from "next/link"
+import { handleClientScriptLoad } from "next/script"
 
-export function DataTable({ columns, data }) {
+export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
     const table = useReactTable({
@@ -49,6 +50,39 @@ export function DataTable({ columns, data }) {
     const selectedIds = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original.id
     );
+    async function handleStatus(status) {
+        const estadolocura = status ? true : false
+        setDataCurated(
+            dataCurated.map((e) => {
+                if (selectedIds.includes(e.id)) {
+                    return {
+                        id: e.id,
+                        status: estadolocura
+                    }
+                } else {
+                    return e
+                }
+            })
+        )
+        try {
+            const response = await fetch(`/api/products`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: selectedIds, status: status
+                }),
+            });
+
+            if (!response.ok) {
+                console.error("Error al actualizar. Revertiendo cambio.");
+            }
+        } catch (error) {
+            console.error("Error de red al intentar actualizar el estado:", error);
+        }
+    }
+
     return (
         <div>
             <div className="flex flex-row">
@@ -71,8 +105,8 @@ export function DataTable({ columns, data }) {
                                 Mover a la papelera
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length}>Activar productos</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length}>Desactivar productos</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(true)}>Activar productos</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(false)}>Desactivar productos</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 

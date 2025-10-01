@@ -40,12 +40,15 @@ export async function POST(request) {
 export async function PATCH(request) {
   try {
     const { id, status } = await request.json();
+    const idList = Array.isArray(id) ? id : [id];
 
-    if (typeof id !== 'number' || typeof status !== 'string') {
+    if (!idList.every((id) => typeof id === "number") || typeof status !== 'boolean') {
       return new Response('Invalid product data', { status: 400 });
     }
 
-    await updateProductStatus(id, status);
+    for (const id of idList) {
+      await updateProductStatus(id, status);
+    }
     return NextResponse.json({ message: "Status updated" }, { status: 200 });
 
   } catch (error) {

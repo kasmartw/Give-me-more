@@ -13,6 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { useState } from "react"
 import Link from "next/link"
+import { useProduct } from "@/components/contextoGlobal"
+
+
 
 export const columns = [
     {
@@ -94,13 +97,23 @@ export const columns = [
         cell: ({ row }) => {
             const initialStatus = row.getValue("status")
             const [currentStatus, setCurrentStatus] = useState(initialStatus)
+            const { dataCurated, setDataCurated } = useProduct([{}]);
             const product = row.original
-            const isChecked = currentStatus === 'activo'
 
-            const handleStatusChange = async (newIsChecked) => {
-                const newStatusString = newIsChecked ? 'activo' : 'inactivo';
-                const oldStatus = currentStatus;
-                setCurrentStatus(newStatusString);
+            const handleStatusChange = async () => {
+                //setCurrentStatus(!currentStatus);
+                setDataCurated(
+                    dataCurated.map((e) => {
+                        if (product.id == e.id) {
+                            return {
+                                id: e.id,
+                                status: !e.status
+                            }
+                        } else {
+                            return e
+                        }
+                    })
+                )
 
                 try {
                     const response = await fetch(`/api/products`, {
@@ -108,23 +121,37 @@ export const columns = [
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ id: product.id, status: newStatusString }),
+                        body: JSON.stringify({
+                            id: product.id, status: !dataCurated.filter((e) => {
+                                return e.id == product.id
+                            })[0].status
+                        }),
                     });
 
                     if (!response.ok) {
                         console.error("Error al actualizar. Revertiendo cambio.");
-                        setCurrentStatus(oldStatus);
+                        //setCurrentStatus(!currentStatus);
                     }
                 } catch (error) {
                     console.error("Error de red al intentar actualizar el estado:", error);
-                    setCurrentStatus(oldStatus);
+                    //setCurrentStatus(!currentStatus);
                 }
             }
 
+
+
             return (
                 <div className="flex items-center justify-center gap-2">
-                    <Switch checked={isChecked} onCheckedChange={handleStatusChange} />
-                    <span className="capitalize w-14 text-left">{currentStatus}</span>
+                    <Switch checked={
+                        dataCurated.filter((e) => {
+                            return e.id == product.id
+                        })[0].status
+                    } onCheckedChange={handleStatusChange} />
+                    {/*<Switch checked={isChecked} onCheckedChange={handleStatusChange} />*/}
+                    <span className="capitalize w-14 text-left">{dataCurated.filter((e) => {
+                        return e.id == product.id
+                    })[0].status ? "Activo" : "Inactivo"}</span>
+
                 </div>
             )
         },
@@ -159,6 +186,3 @@ export const columns = [
     }
 
 ]
-//agregar la logica de opcion multiple, que me salga arriba en vez de abajo la cantidad de elementos selecionados,
-// tambien que salga las opciones que puedes hacer con ellas como borrar y activar desactivar editar inventario y precio.
-// crear selecion lo de acciones multiples, y los archivos de editar papelera y demas
