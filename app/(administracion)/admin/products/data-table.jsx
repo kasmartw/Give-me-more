@@ -17,8 +17,18 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import Link from "next/link"
 
 export function DataTable({ columns, data }) {
     const [sorting, setSorting] = useState([])
@@ -36,9 +46,37 @@ export function DataTable({ columns, data }) {
             rowSelection,
         },
     })
-
+    const selectedIds = table.getFilteredSelectedRowModel().rows.map(
+        (row) => row.original.id
+    );
     return (
         <div>
+            <div className="flex flex-row">
+                <div className="text-muted-foreground flex-1 text-sm">
+                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">Acciones</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem disabled={!selectedIds.length}>
+                            <Link href={`/admin/products/edit-product/${selectedIds.join('/')}`}>
+                                Editar productos
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length}>
+                            <Link href={`/admin/products/move-to-trash/${selectedIds.join('/')}`}>
+                                Mover a la papelera
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length}>Activar productos</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length}>Desactivar productos</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+            </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
                     <TableHeader>
@@ -84,10 +122,6 @@ export function DataTable({ columns, data }) {
                 </Table>
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="text-muted-foreground flex-1 text-sm">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
-                </div>
                 <Button
                     variant="outline"
                     size="sm"

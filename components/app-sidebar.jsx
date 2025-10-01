@@ -1,5 +1,5 @@
 "use client"
-import {CircleUserRound, Box, GalleryVerticalEnd, ChartSpline, Boxes} from "lucide-react"
+import { CircleUserRound, Box, GalleryVerticalEnd, ChartSpline, Boxes } from "lucide-react"
 import * as React from "react"
 
 
@@ -30,13 +30,12 @@ const data = {
   navMain: [
     {
       title: "Productos",
-      url: "@/app/admin/products",
       icon: Box,
       isActive: true,
       items: [
         {
           title: "Todos los productos",
-          url: "#",
+          url: "/admin/products",
         },
         {
           title: "Agregar producto",

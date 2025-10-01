@@ -5,7 +5,6 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
@@ -13,6 +12,7 @@ import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { useState } from "react"
+import Link from "next/link"
 
 export const columns = [
     {
@@ -132,8 +132,7 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
-            const payment = row.original
-
+            const product = row.original
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -144,14 +143,15 @@ export const columns = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(payment.id)}
-                        >
-                            Ver producto
+                        <DropdownMenuItem>
+                            <Link href={`/admin/products/product-overview${product.id}`}>Ver producto</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Editar producto</DropdownMenuItem>
-                        <DropdownMenuItem>Eliminar producto</DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Link href={`/admin/products/edit-product/${product.id}`}>Editar producto</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Link href={`/admin/products/move-to-trash/${product.id}`}>Mover a la papelera</Link>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
@@ -161,3 +161,4 @@ export const columns = [
 ]
 //agregar la logica de opcion multiple, que me salga arriba en vez de abajo la cantidad de elementos selecionados,
 // tambien que salga las opciones que puedes hacer con ellas como borrar y activar desactivar editar inventario y precio.
+// crear selecion lo de acciones multiples, y los archivos de editar papelera y demas

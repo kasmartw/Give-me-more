@@ -20,7 +20,7 @@ model Product {
   price     Float
   desc      String?
   img       String
-  status    String
+  status    Boolean
   stock     Int
   orderItem OrderItem[] 
 }
