@@ -11,7 +11,6 @@ import { MoreHorizontal } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
-import { useState } from "react"
 import Link from "next/link"
 import { useProduct } from "@/components/contextoGlobal"
 
@@ -46,10 +45,11 @@ export const columns = [
             return (
                 <Button
                     variant="ghost"
+                    style={{ paddingLeft: 0 }}
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
                     Nombre
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    <ArrowUpDown className="h-4 w-4" />
                 </Button>
             )
         },
@@ -95,13 +95,10 @@ export const columns = [
         accessorKey: "status",
         header: () => <div className="text-center">Estado</div>,
         cell: ({ row }) => {
-            const initialStatus = row.getValue("status")
-            const [currentStatus, setCurrentStatus] = useState(initialStatus)
             const { dataCurated, setDataCurated } = useProduct([{}]);
             const product = row.original
 
             const handleStatusChange = async () => {
-                //setCurrentStatus(!currentStatus);
                 setDataCurated(
                     dataCurated.map((e) => {
                         if (product.id == e.id) {
@@ -122,7 +119,7 @@ export const columns = [
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            id: product.id, status: !dataCurated.filter((e) => {
+                            id: product.id, action: "status", status: !dataCurated.filter((e) => {
                                 return e.id == product.id
                             })[0].status
                         }),
@@ -130,11 +127,9 @@ export const columns = [
 
                     if (!response.ok) {
                         console.error("Error al actualizar. Revertiendo cambio.");
-                        //setCurrentStatus(!currentStatus);
                     }
                 } catch (error) {
                     console.error("Error de red al intentar actualizar el estado:", error);
-                    //setCurrentStatus(!currentStatus);
                 }
             }
 
@@ -147,7 +142,6 @@ export const columns = [
                             return e.id == product.id
                         })[0].status
                     } onCheckedChange={handleStatusChange} />
-                    {/*<Switch checked={isChecked} onCheckedChange={handleStatusChange} />*/}
                     <span className="capitalize w-14 text-left">{dataCurated.filter((e) => {
                         return e.id == product.id
                     })[0].status ? "Activo" : "Inactivo"}</span>

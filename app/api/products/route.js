@@ -1,16 +1,28 @@
 import { NextResponse } from "next/server";
-import { readProducts, createProduct, deleteProduct, updateProductStatus } from "@/lib/manage-db";
+import { readProducts, createProduct, deleteProduct, updateProductStatus, readSomeProducts } from "@/lib/manage-db";
 import { isValidProduct } from "@/lib/valid-product";
+
 
 export const revalidate = 0;
 
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const ids = searchParams.getAll("id")
+  const idsInt = ids.map((id) => parseInt(id))
   try {
-    const products = await readProducts();
-    return NextResponse.json(products, { status: 200 });
+    console.log(idsInt)
+    if (idsInt.length === 0) {
+      console.log("todos los productos")
+      const products = await readProducts();
+      return NextResponse.json(products, { status: 200 });
+    } else {
+      console.log("algunos productos")
+      const someProducts = await Promise.all(idsInt.map(id => readSomeProducts(id)));
+      return NextResponse.json(someProducts)
+    }
   } catch (error) {
-    const message = error instanceof Error ? reason.message : 'Unexpected exception'
+    const message = error instanceof Error ? error.message : 'Unexpected exception'
 
     return new Response(message, { status: 500 })
   }
@@ -39,18 +51,19 @@ export async function POST(request) {
 }
 export async function PATCH(request) {
   try {
-    const { id, status } = await request.json();
+    const { id, status, action } = await request.json();
     const idList = Array.isArray(id) ? id : [id];
 
-    if (!idList.every((id) => typeof id === "number") || typeof status !== 'boolean') {
+    if (!idList.every((id) => typeof id === "number") || typeof status !== 'boolean' || typeof action !== 'string') {
       return new Response('Invalid product data', { status: 400 });
     }
+    if (action == "status") {
 
-    for (const id of idList) {
-      await updateProductStatus(id, status);
+      for (const id of idList) {
+        await updateProductStatus(id, status);
+      }
+      return NextResponse.json({ message: "Status updated" }, { status: 200 });
     }
-    return NextResponse.json({ message: "Status updated" }, { status: 200 });
-
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected exception'
 

@@ -21,15 +21,12 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import Link from "next/link"
-import { handleClientScriptLoad } from "next/script"
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
@@ -71,13 +68,13 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    id: selectedIds, status: status
+                    id: selectedIds, status: status, action: "status"
                 }),
             });
-
             if (!response.ok) {
                 console.error("Error al actualizar. Revertiendo cambio.");
             }
+            setRowSelection([])
         } catch (error) {
             console.error("Error de red al intentar actualizar el estado:", error);
         }

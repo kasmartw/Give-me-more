@@ -19,8 +19,8 @@ export default function ProductsPage() {
 
                 if (res.ok) {
                     const products = await res.json()
-                    console.log(products)
-                    setData(products)
+                    const ordenedProducts = products.sort((a, b) => a.name.localeCompare(b.name))
+                    setData(ordenedProducts)
                     setDataCurated(
                         products.map((e) => {
                             return {
@@ -39,7 +39,6 @@ export default function ProductsPage() {
 
         fetchData()
     }, [])
-    console.log(dataCurated)
     return (
 
         <div className="container mx-auto py-10">
