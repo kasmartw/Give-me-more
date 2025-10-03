@@ -39,18 +39,17 @@ const data = {
         },
         {
           title: "Agregar producto",
-          url: "#",
+          url: "/admin/products/add-product",
         },
       ],
     },
     {
       title: "Usuarios",
       icon: CircleUserRound,
-      url: "#",
       items: [
         {
           title: "Todos los usuarios",
-          url: "#",
+          url: "/admin/users",
         },
         {
           title: "Agregar usuario",
