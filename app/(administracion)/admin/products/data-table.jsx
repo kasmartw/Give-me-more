@@ -94,7 +94,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     <DropdownMenuContent>
                         <DropdownMenuItem disabled={!selectedIds.length}>
                             <Link href={`/admin/products/edit-product/${selectedIds.join('/')}`}>
-                                Editar productos
+                                Editar precio
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem disabled={!selectedIds.length}>

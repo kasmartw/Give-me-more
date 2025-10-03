@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readProducts, createProduct, deleteProduct, updateProductStatus, readSomeProducts } from "@/lib/manage-db";
+import { readProducts, createProduct, deleteProduct, updateProductStatus, readSomeProducts, updateProduct } from "@/lib/manage-db";
 import { isValidProduct } from "@/lib/valid-product";
 
 
@@ -50,24 +50,45 @@ export async function POST(request) {
   }
 }
 export async function PATCH(request) {
-  try {
-    const { id, status, action } = await request.json();
-    const idList = Array.isArray(id) ? id : [id];
+  const { searchParams } = new URL(request.url);
+  const ids = searchParams.getAll("id")
+  const idsInt = ids.map((id) => parseInt(id))
+  const { action, name, desc, img, price, status } = await request.json();
+  if (action == "status") {
+    try {
+      const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
 
-    if (!idList.every((id) => typeof id === "number") || typeof status !== 'boolean' || typeof action !== 'string') {
-      return new Response('Invalid product data', { status: 400 });
-    }
-    if (action == "status") {
-
+      if (!idList.every((id) => typeof id === "number") || typeof status !== 'boolean' || typeof action !== 'string') {
+        return new Response('Invalid product data', { status: 400 });
+      }
       for (const id of idList) {
         await updateProductStatus(id, status);
       }
       return NextResponse.json({ message: "Status updated" }, { status: 200 });
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unexpected exception'
 
-    return new Response(message, { status: 500 })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unexpected exception'
+
+      return new Response(message, { status: 500 })
+    }
+  } else if (action == "edit") {
+    console.log("edit")
+    try {
+      const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
+
+      if (!idList.every((id) => typeof id === "number") || typeof name !== 'string' || typeof desc !== 'string' || typeof img !== 'string' || typeof price !== 'number') {
+        return new Response('Invalid product data', { status: 400 });
+      }
+      for (const id of idList) {
+        console.log("ahora vamos a db")
+        await updateProduct(id, name, desc, img, price);
+      }
+      return NextResponse.json({ message: "Product updated" }, { status: 200 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unexpected exception"
+
+      return new Response(message, { status: 500 })
+    }
   }
 }
 
