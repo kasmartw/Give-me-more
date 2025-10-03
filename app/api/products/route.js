@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readProducts, createProduct, deleteProduct, updateProductStatus, readSomeProducts, updateProduct } from "@/lib/manage-db";
+import { readProducts, createProduct, deleteProduct, updateProductStatus, readSomeProducts, updateProduct, MoveToTrash } from "@/lib/manage-db";
 import { isValidProduct } from "@/lib/valid-product";
 
 
@@ -30,18 +30,30 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const formData = await request.formData();
-    const name = formData.get("name");
-    const desc = formData.get("desc");
-    const img = formData.get("img");
-    const price = formData.get("price");
+    console.log("post")
+    const { action, name, desc, img, price, stock, status } = await request.json();
     const priceFloat = Number(price);
 
-    if (isValidProduct(name, desc, img, priceFloat)) {
-      await createProduct(name, desc, img, priceFloat);
-      return NextResponse.json({ status: 201 });
+    if (action == "create") {
+      console.log("create")
+
+      if (isValidProduct(name, desc, img, priceFloat)) {
+        await createProduct(name, desc, img, priceFloat, status, stock);
+        return NextResponse.json({ status: 201 });
+      } else {
+        return new Response('Invalid product data', { status: 400 });
+      }
+    } else if (action == "moveToTrash") {
+      console.log("moveToTrash")
+      if (isValidProduct(name, desc, img, priceFloat)) {
+        console.log("es valido")
+        await MoveToTrash(name, desc, img, priceFloat, status, stock);
+        return NextResponse.json({ status: 201 });
+      } else {
+        return new Response('Invalid product data', { status: 400 });
+      }
     } else {
-      return new Response('Invalid product data', { status: 400 });
+      return new Response('Invalid action', { status: 400 });
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected exception'
@@ -53,7 +65,7 @@ export async function PATCH(request) {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.getAll("id")
   const idsInt = ids.map((id) => parseInt(id))
-  const { action, name, desc, img, price, status } = await request.json();
+  const { action, name, desc, img, price, status, stock } = await request.json();
   if (action == "status") {
     try {
       const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
@@ -62,8 +74,11 @@ export async function PATCH(request) {
         return new Response('Invalid product data', { status: 400 });
       }
       for (const id of idList) {
+        console.log("ahora vamos a db")
         await updateProductStatus(id, status);
+
       }
+      console.log("se cambio el estado")
       return NextResponse.json({ message: "Status updated" }, { status: 200 });
 
     } catch (error) {
@@ -81,7 +96,7 @@ export async function PATCH(request) {
       }
       for (const id of idList) {
         console.log("ahora vamos a db")
-        await updateProduct(id, name, desc, img, price);
+        await updateProduct(id, name, desc, img, price, stock);
       }
       return NextResponse.json({ message: "Product updated" }, { status: 200 });
     } catch (error) {
@@ -94,8 +109,7 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
-    const formData = await request.formData();
-    const id = formData.get("id");
+    const { id } = await request.json();
     if (typeof id === 'number') {
       await deleteProduct(id);
       return NextResponse.json({ status: 200 });

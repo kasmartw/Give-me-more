@@ -7,6 +7,7 @@ export default function EditProduct() {
     const [valueDesc, setValueDesc] = useState('')
     const [valueImg, setValueImg] = useState('')
     const [valuePrice, setValuePrice] = useState('')
+    const [valueStock, setValueStock] = useState('')
     const [isDisabledButton, setIsDisabledButton] = useState(false)
     const [manyProducts, setManyProducts] = useState([])
     const [isHidden, setIsHidden] = useState(true)
@@ -33,6 +34,7 @@ export default function EditProduct() {
                         setValueDesc(product[0].desc)
                         setValueImg(product[0].img)
                         setValuePrice(product[0].price)
+                        setValueStock(product[0].stock)
                     } else {
                         setManyProducts(product)
                         console.log("varios productos")
@@ -63,6 +65,8 @@ export default function EditProduct() {
         console.log("se hizo click en un producto")
         setIsDisabledButton(true);
         const priceFloat = parseFloat(valuePrice)
+        const stockInt = parseInt(valueStock)
+
 
         if (typeof valueName !== "string" || typeof valueDesc !== "string" || typeof valueImg !== "string" || typeof priceFloat !== "number") return;
         try {
@@ -76,6 +80,7 @@ export default function EditProduct() {
                     desc: valueDesc,
                     img: valueImg,
                     price: priceFloat,
+                    stock: stockInt,
                     action: "edit"
                 }),
             });
@@ -92,6 +97,7 @@ export default function EditProduct() {
         console.log("se hizo click en varios productos")
         setIsDisabledButton(true);
         const priceFloat = parseFloat(valuePrice)
+        const stockInt = parseInt(valueStock)
 
         try {
             const updatePromises = manyProducts.map((product) =>
@@ -105,6 +111,7 @@ export default function EditProduct() {
                         desc: product.desc,
                         img: product.img,
                         price: priceFloat,
+                        stock: stockInt,
                         action: "edit"
                     }),
                 })
@@ -185,6 +192,17 @@ export default function EditProduct() {
                     value={valuePrice}
                     onChange={(e) => setValuePrice(e.target.value)}
                     id="price"
+                    className="border rounded p-2"
+                />
+            </div>
+            <div className="flex flex-col">
+                <label className="mb-1 font-medium">
+                    Inventario
+                </label>
+                <input
+                    value={valueStock}
+                    onChange={(e) => setValueStock(e.target.value)}
+                    id="stock"
                     className="border rounded p-2"
                 />
             </div>

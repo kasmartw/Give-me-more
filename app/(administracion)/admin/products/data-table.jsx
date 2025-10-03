@@ -31,6 +31,7 @@ import Link from "next/link"
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
+    const [notification, setNotification] = useState(null);
     const table = useReactTable({
         data,
         columns,
@@ -48,7 +49,8 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
         (row) => row.original.id
     );
     async function handleStatus(status) {
-        const estadolocura = status ? true : false
+        const estadolocura = status ? true : false;
+        const queryParams = selectedIds.map(id => `id=${id}`).join('&');
         setDataCurated(
             dataCurated.map((e) => {
                 if (selectedIds.includes(e.id)) {
@@ -62,13 +64,13 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
             })
         )
         try {
-            const response = await fetch(`/api/products`, {
+            const response = await fetch(`/api/products?${queryParams}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    id: selectedIds, status: status, action: "status"
+                    status: status, action: "status"
                 }),
             });
             if (!response.ok) {
@@ -79,9 +81,65 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
             console.error("Error de red al intentar actualizar el estado:", error);
         }
     }
+    async function handleMoveToTrash() {
+        const data = dataCurated.filter((e) => selectedIds.includes(e.id));
+        try {
+            const postPromises = data.map((i) =>
+                fetch(`/api/products`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: i.name,
+                        desc: i.desc,
+                        img: i.img,
+                        price: i.price,
+                        status: i.status,
+                        stock: i.stock,
+                        action: "moveToTrash",
+                    }),
+                })
+            );
+
+            const postResponses = await Promise.all(postPromises);
+
+            if (postResponses.every((res) => res.ok)) {
+                const deletePromises = data.map((i) =>
+                    fetch(`/api/products`, {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ id: i.id }),
+                    })
+                );
+
+                const deleteResponses = await Promise.all(deletePromises);
+
+                if (deleteResponses.every((res) => res.ok)) {
+                    setNotification({ type: 'success', message: 'Productos movidos a la papelera correctamente.' });
+                } else {
+                    setNotification({ type: 'error', message: 'Error al eliminar productos después de moverlos.' });
+                }
+            } else {
+                setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' });
+            }
+            setRowSelection([])
+        } catch (error) {
+            setNotification({ type: 'error', message: 'Error en el proceso de mover a la papelera.' });
+            console.error("Error in handleMoveToTrash:", error);
+        }
+    }
 
     return (
         <div>
+            {notification && (
+                <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {notification.message}
+                    <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
+                </div>
+            )}
             <div className="flex flex-row">
                 <div className="text-muted-foreground flex-1 text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -94,14 +152,10 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     <DropdownMenuContent>
                         <DropdownMenuItem disabled={!selectedIds.length}>
                             <Link href={`/admin/products/edit-product/${selectedIds.join('/')}`}>
-                                Editar precio
+                                Editar precio e inventario
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length}>
-                            <Link href={`/admin/products/move-to-trash/${selectedIds.join('/')}`}>
-                                Mover a la papelera
-                            </Link>
-                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleMoveToTrash()}>Mover a la papelera</DropdownMenuItem>
                         <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(true)}>Activar productos</DropdownMenuItem>
                         <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(false)}>Desactivar productos</DropdownMenuItem>
                     </DropdownMenuContent>

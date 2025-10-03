@@ -24,7 +24,15 @@ model Product {
   stock     Int
   orderItem OrderItem[] 
 }
-
+model Trash{
+  id      Int @id @default(autoincrement())
+  name    String
+  price   Float
+  desc    String?
+  img     String
+  status  Boolean
+  stock   Int
+}
 model User {
   id       Int      @id @default(autoincrement())
   name     String

@@ -113,7 +113,7 @@ export const columns = [
                 )
 
                 try {
-                    const response = await fetch(`/api/products`, {
+                    const response = await fetch(`/api/products?id=${product.id}`, {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
@@ -170,11 +170,47 @@ export const columns = [
                         <DropdownMenuItem>
                             <Link href={`/admin/products/edit-product/${product.id}`}>Editar producto</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Link href={`/admin/products/move-to-trash/${product.id}`}>Mover a la papelera</Link>
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                            try {
+                                const postPromises = fetch(`/api/products`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        name: product.name,
+                                        desc: product.desc,
+                                        img: product.img,
+                                        price: product.price,
+                                        status: product.status,
+                                        stock: product.stock,
+                                        action: "moveToTrash",
+                                    }),
+                                })
+
+                                const postResponses = await postPromises;
+                                if (postResponses.ok) {
+                                    const deletePromises = fetch(`/api/products`, {
+                                        method: "DELETE",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ id: product.id }),
+                                    })
+                                    const deleteResponses = await deletePromises;
+
+                                    if (deleteResponses.ok) {
+                                        console.log("Producto movido a la papelera correctamente.");
+                                    }
+                                } else {
+                                    console.error("Error al mover producto a la papelera.");
+                                }
+                            } catch (error) {
+                                console.error("Error in handleMoveToTrash:", error);
+                            }
+                        }}>Mover a la papelera</DropdownMenuItem>
                     </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu >
             )
         },
     }

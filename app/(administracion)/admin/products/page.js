@@ -25,6 +25,11 @@ export default function ProductsPage() {
                         products.map((e) => {
                             return {
                                 id: e.id,
+                                name: e.name,
+                                desc: e.desc,
+                                img: e.img,
+                                price: e.price,
+                                stock: e.stock,
                                 status: e.status
                             }
                         })
