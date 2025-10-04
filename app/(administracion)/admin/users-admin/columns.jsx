@@ -8,8 +8,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import Link from "next/link"
 
 export const columns = [
     {
@@ -61,7 +61,26 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
-            const actions = row.original
+            const user = row.original
+            async function handleDeleteUser(userId) {
+                //hacer un alert dialog para confirmar la eliminacion
+                try {
+                    const response = await fetch(`/api/users`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id: userId }),
+                    })
+                    if (response.ok) {
+                        alert('Usuario eliminado')
+                    } else {
+                        alert('Error en la peticion')
+                    }
+                } catch (error) {
+                    console.error(error)
+                }
+            }
 
             return (
                 <DropdownMenu>
@@ -72,7 +91,12 @@ export const columns = [
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Eliminar usuario</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteUser(user.id)}>Eliminar usuario</DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Link href={`/admin/users-admin/edit-user/${user.id}`}>Cambiar contraseña</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

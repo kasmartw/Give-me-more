@@ -29,6 +29,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+
 
 export function NavUser({
   user
@@ -68,12 +70,13 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuItem>
-              <LogOut />
-              Log out
+              <Button variant="ghost" onClick={() => alert("cerrar session")}>
+                Log out
+              </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-    </SidebarMenu>
+    </SidebarMenu >
   );
 }

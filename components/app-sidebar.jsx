@@ -53,7 +53,7 @@ const data = {
         },
         {
           title: "Agregar usuario",
-          url: "#",
+          url: "/admin/users-admin/add-user",
         },
       ],
     },

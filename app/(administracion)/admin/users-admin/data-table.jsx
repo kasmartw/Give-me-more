@@ -17,7 +17,15 @@ import {
 
     TableRow,
 } from "@/components/ui/table"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import Link from 'next/link'
+
 
 export function DataTable({ columns, data }) {
     const table = useReactTable({
@@ -26,9 +34,43 @@ export function DataTable({ columns, data }) {
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
     })
-
+    const selectedIds = table.getFilteredSelectedRowModel().rows.map(
+        (row) => row.original.id
+    );
+    async function handleDeleteUser() {
+        console.log(selectedIds)
+        try {
+            const promise = selectedIds.map(async (id) => {
+                await fetch('/api/users', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id }),
+                });
+            });
+            await Promise.all(promise);
+            alert('Usuarios eliminados');
+        } catch (error) {
+            console.error(error);
+        }
+    }
     return (
         <div>
+            <div className="flex flex-row">
+                <div className="text-muted-foreground flex-1 text-sm">
+                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">Acciones</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleDeleteUser()}>Eliminar usuario</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
                     <TableHeader>
