@@ -49,7 +49,7 @@ const data = {
       items: [
         {
           title: "Todos los usuarios",
-          url: "/admin/users",
+          url: "/admin/users-admin",
         },
         {
           title: "Agregar usuario",

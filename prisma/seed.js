@@ -53,7 +53,11 @@ const productData = [
     { name: "Ajedrez", desc: "family game", img: "ajedrez.jpg", price: 24.45, status: true, stock: 8 },
     { name: "Drone", desc: "for boys", img: "drone.jpg", price: 150.00, status: false, stock: 0 }
 ];
-
+const admins = [
+    { username: "kassandra", email: "kassandra@gmail.com", role: "admin", password: "kass24" },
+    { username: "jose", email: "jose@gmail.com", role: "admin", password: "jose24" },
+    { username: "luis", email: "luis@gmail.com", role: "admin", password: "luis24" },
+]
 export async function createProducts() {
     // Limpia todos los productos antes de insertarlos
     const cleanedProducts = productData.map(cleanProductData);
@@ -69,6 +73,13 @@ export async function createProducts() {
 async function main() {
     try {
         await createProducts();
+
+        await prisma.admin.createMany({
+            data: admins,
+            skipDuplicates: true,
+        });
+
+
 
         await prisma.user.upsert({
             where: { email: "alice@prisma.io" },

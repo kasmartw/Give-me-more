@@ -44,6 +44,8 @@ model User {
 model Admin {
   id       Int  @id @default(autoincrement())
   username String @unique
+  email    String @unique
+  role     String
   password String
 }
 

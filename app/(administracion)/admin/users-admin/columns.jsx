@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ArrowUpDown } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export const columns = [
     {
@@ -35,18 +36,7 @@ export const columns = [
     },
     {
         accessorKey: "username",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    style={{ paddingLeft: 0 }}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Nombre de usuario
-                    <ArrowUpDown className="h-4 w-4" />
-                </Button>
-            )
-        },
+        header: () => <div className="text-left">Nombre de usuario</div>,
         cell: ({ row }) => {
             const username = row.getValue("username")
             return <div className="text-left font-medium">{username}</div>
@@ -54,10 +44,10 @@ export const columns = [
     },
     {
         accessorKey: "email",
-        header: () => <div className="text-center">Correo electrónico</div>,
+        header: () => <div className="flex-center">Correo electrónico</div>,
         cell: ({ row }) => {
             const email = row.getValue("email")
-            return <div className="text-left font-medium">{email}</div>
+            return <div className="flex-center font-medium">{email}</div>
         },
     },
     {
@@ -65,7 +55,7 @@ export const columns = [
         header: () => <div className="text-center">Rol</div>,
         cell: ({ row }) => {
             const role = row.getValue("role")
-            return <div className="text-left font-medium">{role}</div>
+            return <div className="text-center font-medium">{role}</div>
         },
     },
     {
