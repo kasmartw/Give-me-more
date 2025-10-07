@@ -27,7 +27,10 @@ export default function EditUser() {
                     setRes(user[0])
                 }
 
-
+                setPass({
+                    newPass: "",
+                    confirmPass: ""
+                })
             } catch (err) {
                 console.error(err)
             }

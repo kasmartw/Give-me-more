@@ -16,24 +16,33 @@ import { Alert, AlertTitle } from "@/components/ui/alert"
 
 
 function FormSignup() {
-    const [value, setValue] = useState({ name: "", pass: "", email: "" });
+    const [value, setValue] = useState({ name: "", pass: "", confirmPass: "", email: "" });
     const [error, setError] = useState("")
     function handleChange(e) {
         setValue({ ...value, [e.target.name]: e.target.value })
     }
     async function handleSubmit(e) {
         e.preventDefault();
-
-        const res = await fetch('/api/users', {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: value.name, password: value.pass, id: e.target.id, email: value.email, role: "admin" })
-        })
-        const data = await res.json();
-
-        if (!res.ok) {
-            setError(data.message)
+        if (value.pass !== value.confirmPass) {
+            setError("Las contraseñas no coinciden")
+            return;
         }
+        setError("")
+        try {
+            const res = await fetch('/api/users', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: value.name, password: value.pass, id: e.target.id, email: value.email, role: "admin" })
+            })
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.message)
+            }
+        } catch (err) {
+            setError(err.message)
+        }
+        setValue({ name: "", pass: "", confirmPass: "", email: "" })
     }
 
     return (
@@ -89,6 +98,20 @@ function FormSignup() {
                                         type="password"
                                         name="pass"
                                         value={value.pass}
+                                        onChange={(e) => handleChange(e)}
+                                        required
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <div className="flex items-center">
+                                        <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                                    </div>
+                                    <Input
+                                        className="w-3/4"
+                                        id="confirmPassword"
+                                        type="password"
+                                        name="confirmPass"
+                                        value={value.confirmPass}
                                         onChange={(e) => handleChange(e)}
                                         required
                                     />

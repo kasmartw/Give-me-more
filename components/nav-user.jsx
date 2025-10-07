@@ -30,6 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import signOut from "@/lib/logout"
 
 
 export function NavUser({
@@ -70,7 +71,7 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuItem>
-              <Button variant="ghost" onClick={() => alert("cerrar session")}>
+              <Button variant="ghost" onClick={() => signOut()} className="w-full justify-start">
                 Log out
               </Button>
             </DropdownMenuItem>

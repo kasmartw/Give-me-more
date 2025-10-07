@@ -33,21 +33,25 @@ export async function POST(request) {
     console.log("post")
     const { action, name, desc, img, price, stock, status } = await request.json();
     const priceFloat = Number(price);
+    const statusBool = typeof status === 'boolean' ? status : (status === 'active');
+    const stockInt = parseInt(stock);
+
 
     if (action == "create") {
       console.log("create")
 
-      if (isValidProduct(name, desc, img, priceFloat)) {
-        await createProduct(name, desc, img, priceFloat, status, stock);
+      if (isValidProduct(name, desc, img, priceFloat, statusBool, stockInt)) {
+        await createProduct(name, desc, img, priceFloat, statusBool, stockInt);
         return NextResponse.json({ status: 201 });
       } else {
         return new Response('Invalid product data', { status: 400 });
       }
     } else if (action == "moveToTrash") {
       console.log("moveToTrash")
-      if (isValidProduct(name, desc, img, priceFloat)) {
+      if (isValidProduct(name, desc, img, priceFloat, statusBool, stockInt)) {
         console.log("es valido")
-        await MoveToTrash(name, desc, img, priceFloat, status, stock);
+        await MoveToTrash(name, desc, img, priceFloat, statusBool, stockInt);
+        console.log("se movio")
         return NextResponse.json({ status: 201 });
       } else {
         return new Response('Invalid product data', { status: 400 });
@@ -110,7 +114,9 @@ export async function PATCH(request) {
 export async function DELETE(request) {
   try {
     const { id } = await request.json();
+    console.log("delete", id);
     if (typeof id === 'number') {
+      console.log("es numero");
       await deleteProduct(id);
       return NextResponse.json({ status: 200 });
     } else {

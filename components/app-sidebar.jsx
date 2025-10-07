@@ -41,6 +41,10 @@ const data = {
           title: "Agregar producto",
           url: "/admin/products/add-product",
         },
+        {
+          title: "Papelera",
+          url: "/admin/products/trash-products",
+        },
       ],
     },
     {

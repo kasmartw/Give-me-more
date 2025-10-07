@@ -24,12 +24,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import Link from 'next/link'
 
 
-export function DataTable({ columns, data }) {
+export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const table = useReactTable({
-        data,
+        data: dataCurated,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -38,6 +37,9 @@ export function DataTable({ columns, data }) {
         (row) => row.original.id
     );
     async function handleDeleteUser() {
+        console.log("dataCurated.length:", dataCurated.length)
+        console.log("selectedIds.length:", selectedIds.length)
+        if (dataCurated.length === selectedIds.length) return;
         console.log(selectedIds)
         try {
             const promise = selectedIds.map(async (id) => {
@@ -50,7 +52,11 @@ export function DataTable({ columns, data }) {
                 });
             });
             await Promise.all(promise);
+            setDataCurated(
+                dataCurated.filter((e) => !selectedIds.includes(e.id))
+            )
             alert('Usuarios eliminados');
+            setRowSelection([])
         } catch (error) {
             console.error(error);
         }
