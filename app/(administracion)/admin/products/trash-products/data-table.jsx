@@ -1,11 +1,10 @@
-"use client"
-
+"use client";
 import {
-    ColumnDef,
     flexRender,
     getCoreRowModel,
-    getPaginationRowModel,
     useReactTable,
+    getPaginationRowModel,
+    getSortedRowModel,
 } from "@tanstack/react-table"
 
 import {
@@ -14,54 +13,49 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-
     TableRow,
 } from "@/components/ui/table"
+
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import Link from "next/link"
 
-
-export function DataTable({ columns, data, dataCurated, setDataCurated }) {
+export function DataTable({ columns, data }) {
+    const [sorting, setSorting] = useState([]);
+    const [rowSelection, setRowSelection] = useState({});
+    const [notification, setNotification] = useState(null);
     const table = useReactTable({
-        data: dataCurated,
+        data,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-    })
+        getSortedRowModel: getSortedRowModel(),
+        onRowSelectionChange: setRowSelection,
+        onSortingChange: setSorting,
+        state: {
+            sorting,
+            rowSelection,
+        },
+    });
     const selectedIds = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original.id
     );
-    async function handleDeleteUser() {
-        console.log("dataCurated.length:", dataCurated.length)
-        console.log("selectedIds.length:", selectedIds.length)
-        if (dataCurated.length === selectedIds.length) return;
-        console.log(selectedIds)
-        try {
-            const promise = selectedIds.map(async (id) => {
-                await fetch('/api/users', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ id }),
-                });
-            });
-            await Promise.all(promise);
-            setDataCurated(
-                dataCurated.filter((e) => !selectedIds.includes(e.id))
-            )
-            alert('Usuarios eliminados');
-        } catch (error) {
-            console.error(error);
-        }
-    }
+
     return (
         <div>
+            {notification && (
+                <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {notification.message}
+                    <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
+                </div>
+            )}
             <div className="flex flex-row">
                 <div className="text-muted-foreground flex-1 text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -72,9 +66,11 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         <Button variant="outline">Acciones</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleDeleteUser()}>Eliminar usuario</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length}>Restaurar</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length}>Eliminar permanentemente</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
@@ -91,7 +87,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                                                     header.getContext()
                                                 )}
                                         </TableHead>
-                                    )
+                                    );
                                 })}
                             </TableRow>
                         ))}
@@ -127,7 +123,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
                 >
-                    Anterior
+                    Previous
                 </Button>
                 <Button
                     variant="outline"
@@ -135,9 +131,9 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
                 >
-                    Siguiente
+                    Next
                 </Button>
             </div>
         </div>
-    )
+    );
 }

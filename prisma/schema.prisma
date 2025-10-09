@@ -22,17 +22,10 @@ model Product {
   img       String
   status    Boolean
   stock     Int
+  visibility String
   orderItem OrderItem[] 
 }
-model Trash{
-  id      Int @id @default(autoincrement())
-  name    String
-  price   Float
-  desc    String?
-  img     String
-  status  Boolean
-  stock   Int
-}
+
 model User {
   id       Int      @id @default(autoincrement())
   name     String

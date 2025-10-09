@@ -10,9 +10,7 @@ import {
 import { MoreHorizontal } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Switch } from "@/components/ui/switch"
-import Link from "next/link"
-import { useProduct } from "@/components/contextoGlobal"
+
 
 
 export const columns = [
@@ -94,59 +92,8 @@ export const columns = [
         accessorKey: "status",
         header: () => <div className="text-center">Estado</div>,
         cell: ({ row }) => {
-            const { dataCurated, setDataCurated } = useProduct([{}]);
-            const product = row.original
-
-            const handleStatusChange = async () => {
-                setDataCurated(
-                    dataCurated.map((e) => {
-                        if (product.id == e.id) {
-                            return {
-                                id: e.id,
-                                status: !e.status
-                            }
-                        } else {
-                            return e
-                        }
-                    })
-                )
-
-                try {
-                    const response = await fetch(`/api/products?id=${product.id}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            id: product.id, action: "status", status: !dataCurated.filter((e) => {
-                                return e.id == product.id
-                            })[0].status
-                        }),
-                    });
-
-                    if (!response.ok) {
-                        console.error("Error al actualizar. Revertiendo cambio.");
-                    }
-                } catch (error) {
-                    console.error("Error de red al intentar actualizar el estado:", error);
-                }
-            }
-
-
-
-            return (
-                <div className="flex items-center justify-center gap-2">
-                    <Switch checked={
-                        dataCurated.filter((e) => {
-                            return e.id == product.id
-                        })[0].status
-                    } onCheckedChange={handleStatusChange} />
-                    <span className="capitalize w-14 text-left">{dataCurated.filter((e) => {
-                        return e.id == product.id
-                    })[0].status ? "Activo" : "Inactivo"}</span>
-
-                </div>
-            )
+            const status = row.getValue("status")
+            return <div className="text-center font-medium">{status ? "Activo" : "Inactivo"}</div>
         },
     },
     {
@@ -163,17 +110,14 @@ export const columns = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                            <Link href={`/admin/products/product-overview${product.id}`}>Ver producto</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Link href={`/admin/products/edit-product/${product.id}`}>Editar producto</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Mover a la papelera</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+
+                        }}
+                        >Restaurar</DropdownMenuItem>
+                        <DropdownMenuItem>Eliminar permanentemente</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu >
             )
         },
     }
-
 ]

@@ -9,14 +9,21 @@ export const revalidate = 0;
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.getAll("id")
+  const from = searchParams.get("from");
   const idsInt = ids.map((id) => parseInt(id))
+  console.log(from)
   try {
     console.log(idsInt)
-    if (idsInt.length === 0) {
+    if (from === "public") {
       console.log("todos los productos")
-      const products = await readProducts();
+      const products = await readProducts("public");
       return NextResponse.json(products, { status: 200 });
-    } else {
+    } else if (from === "trash") {
+      console.log("productos en la papelera")
+      const allProducts = await readProducts("trash");
+      return NextResponse.json(allProducts, { status: 200 });
+    }
+    else {
       console.log("algunos productos")
       const someProducts = await Promise.all(idsInt.map(id => readSomeProducts(id)));
       return NextResponse.json(someProducts)

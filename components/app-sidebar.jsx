@@ -45,6 +45,10 @@ const data = {
           title: "Papelera",
           url: "/admin/products/trash-products",
         },
+        {
+          title: "Guardados",
+          url: "#"
+        }
       ],
     },
     {

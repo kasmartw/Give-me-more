@@ -3,14 +3,18 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function EditProduct() {
-    const [valueName, setValueName] = useState('')
-    const [valueDesc, setValueDesc] = useState('')
-    const [valueImg, setValueImg] = useState('')
-    const [valuePrice, setValuePrice] = useState('')
-    const [valueStock, setValueStock] = useState('')
     const [isDisabledButton, setIsDisabledButton] = useState(false)
     const [manyProducts, setManyProducts] = useState([])
     const [isHidden, setIsHidden] = useState(true)
+    const [newPrice, setNewPrice] = useState(0)
+    const [newStock, setNewStock] = useState(0)
+    const [values, setValues] = useState({
+        name: '',
+        desc: '',
+        img: '',
+        price: '',
+        stock: ''
+    })
     const params = useParams();
     const { id } = params;
     const ids = id.map(i => `id=${i}`).join('&');
@@ -29,12 +33,17 @@ export default function EditProduct() {
                     const product = await res.json()
                     console.log(product)
                     if (product.length == 1) {
-                        setIsHidden(false);
-                        setValueName(product[0].name)
-                        setValueDesc(product[0].desc)
-                        setValueImg(product[0].img)
-                        setValuePrice(product[0].price)
-                        setValueStock(product[0].stock)
+                        setValues({
+                            name: product[0].name,
+                            desc: product[0].desc,
+                            img: product[0].img,
+                            price: product[0].price,
+                            stock: product[0].stock
+                        })
+                        setNewPrice(product[0].price)
+                        setNewStock(product[0].stock)
+                        setIsHidden(false)
+                        console.log("un producto")
                     } else {
                         setManyProducts(product)
                         console.log("varios productos")
@@ -54,7 +63,57 @@ export default function EditProduct() {
     if (id.length === 1) {
         isOne = false;
     }
+    function handlePriceChange(opcion, roundType) {
+        let priceFloat = parseFloat(values.price);
+        let newPriceInt = parseFloat(newPrice);
+        switch (opcion) {
+            case "incrementar por cantidad":
+                setNewPrice(priceFloat + newPriceInt);
+                break;
+            case "decrementar por cantidad":
+                setNewPrice(priceFloat - newPriceInt);
+                break;
+            case "incrementar por porcentaje":
+                setNewPrice(priceFloat + (priceFloat * newPriceInt / 100));
+                break;
+            case "decrementar por porcentaje":
+                setNewPrice(priceFloat - (priceFloat * newPriceInt / 100));
+                break;
+            default:
+                break;
+        }
+        switch (roundType) {
+            case "redondear a entero":
+                setNewPrice(Math.round(newPrice));
+                break;
+            case "redondear a 2 decimales":
+                setNewPrice(parseFloat(newPrice.toFixed(2)));
+                break;
+            case "no redondear":
+                break;
+            default:
+                break;
+        }
+
+    }
+    function handleStockChange(opcion) {
+        let stockInt = parseInt(values.stock);
+        let newStockInt = parseInt(newStock);
+        switch (opcion) {
+            case "incrementar por cantidad":
+                setNewStock(stockInt + newStockInt);
+                break;
+            case "decrementar por cantidad":
+                setNewStock(stockInt - newStockInt);
+                break;
+            default:
+                break;
+        }
+    }
     async function editedProduct() {
+        if (typeof values.name !== "string" || typeof values.desc !== "string" ||
+            typeof values.img !== "string" || typeof newPrice !== "number" || typeof newStock !== "number") return;
+
         if (manyProducts.length >= 1) {
             editManyProducts()
         } else {
@@ -64,11 +123,7 @@ export default function EditProduct() {
     async function editOneProduct() {
         console.log("se hizo click en un producto")
         setIsDisabledButton(true);
-        const priceFloat = parseFloat(valuePrice)
-        const stockInt = parseInt(valueStock)
 
-
-        if (typeof valueName !== "string" || typeof valueDesc !== "string" || typeof valueImg !== "string" || typeof priceFloat !== "number") return;
         try {
             const response = await fetch(`/api/products?${ids}`, {
                 method: 'PATCH',
@@ -76,11 +131,11 @@ export default function EditProduct() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    name: valueName,
-                    desc: valueDesc,
-                    img: valueImg,
-                    price: priceFloat,
-                    stock: stockInt,
+                    name: values.name,
+                    desc: values.desc,
+                    img: values.img,
+                    price: newPrice ? newPrice : values.price,
+                    stock: newStock ? newStock : values.stock,
                     action: "edit"
                 }),
             });
@@ -96,8 +151,6 @@ export default function EditProduct() {
     async function editManyProducts() {
         console.log("se hizo click en varios productos")
         setIsDisabledButton(true);
-        const priceFloat = parseFloat(valuePrice)
-        const stockInt = parseInt(valueStock)
 
         try {
             const updatePromises = manyProducts.map((product) =>
@@ -110,16 +163,13 @@ export default function EditProduct() {
                         name: product.name,
                         desc: product.desc,
                         img: product.img,
-                        price: priceFloat,
-                        stock: stockInt,
+                        price: newPrice ? newPrice : product.price,
+                        stock: newStock ? newStock : product.stock,
                         action: "edit"
                     }),
                 })
             );
-
             const responses = await Promise.all(updatePromises);
-
-
             const allSuccessful = responses.every(res => res.ok);
 
             if (!allSuccessful) {
@@ -150,8 +200,8 @@ export default function EditProduct() {
                 <input
                     hidden={isHidden}
                     disabled={isOne}
-                    value={valueName}
-                    onChange={(e) => setValueName(e.target.value)}
+                    value={values.name}
+                    onChange={(e) => setValues({ ...values, name: e.target.value })}
                     type="text"
                     id="name"
                     className="border rounded p-2"
@@ -164,8 +214,8 @@ export default function EditProduct() {
                 <textarea
                     hidden={isHidden}
                     disabled={isOne}
-                    value={valueDesc}
-                    onChange={(e) => setValueDesc(e.target.value)}
+                    value={values.desc}
+                    onChange={(e) => setValues({ ...values, desc: e.target.value })}
                     id="desc"
                     className="border rounded p-2"
                 />
@@ -177,8 +227,8 @@ export default function EditProduct() {
                 <input
                     hidden={isHidden}
                     disabled={isOne}
-                    value={valueImg}
-                    onChange={(e) => setValueImg(e.target.value)}
+                    value={values.img}
+                    onChange={(e) => setValues({ ...values, img: e.target.value })}
                     type="text"
                     id="img"
                     className="border rounded p-2"
@@ -189,8 +239,8 @@ export default function EditProduct() {
                     Precio
                 </label>
                 <input
-                    value={valuePrice}
-                    onChange={(e) => setValuePrice(e.target.value)}
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
                     id="price"
                     className="border rounded p-2"
                 />
@@ -200,15 +250,15 @@ export default function EditProduct() {
                     Inventario
                 </label>
                 <input
-                    value={valueStock}
-                    onChange={(e) => setValueStock(e.target.value)}
+                    value={newStock}
+                    onChange={(e) => setNewStock(e.target.value)}
                     id="stock"
                     className="border rounded p-2"
                 />
             </div>
             <button
                 onClick={() => editedProduct()}
-                disabled={isDisabledButton}
+
                 type="submit"
                 className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
             >

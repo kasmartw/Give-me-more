@@ -114,7 +114,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         body: JSON.stringify({ id: i.id }),
                     })
                 );
-
+                setRowSelection([])
                 const deleteResponses = await Promise.all(deletePromises);
 
                 if (deleteResponses.every((res) => res.ok)) {
@@ -125,7 +125,6 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
             } else {
                 setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' });
             }
-            setRowSelection([])
         } catch (error) {
             setNotification({ type: 'error', message: 'Error en el proceso de mover a la papelera.' });
             console.error("Error in handleMoveToTrash:", error);
@@ -160,6 +159,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(false)}>Desactivar productos</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>

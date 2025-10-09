@@ -12,7 +12,7 @@ export default function ProductsPage() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await fetch("/api/products", {
+                const res = await fetch("/api/products?from=public", {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                 })
