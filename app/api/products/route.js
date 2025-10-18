@@ -76,7 +76,7 @@ export async function PATCH(request) {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.getAll("id")
   const idsInt = ids.map((id) => parseInt(id))
-  const { action, name, desc, img, price, status, stock } = await request.json();
+  const { action, name, desc, img, price, status, stock, visibility } = await request.json();
   if (action == "status") {
     try {
       const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
@@ -107,7 +107,7 @@ export async function PATCH(request) {
       }
       for (const id of idList) {
         console.log("ahora vamos a db")
-        await updateProduct(id, name, desc, img, price, stock);
+        await updateProduct(id, name, desc, img, price, stock, visibility);
       }
       return NextResponse.json({ message: "Product updated" }, { status: 200 });
     } catch (error) {
@@ -115,17 +115,42 @@ export async function PATCH(request) {
 
       return new Response(message, { status: 500 })
     }
+  } else if (action == "move") {
+    console.log("move")
+    try {
+      const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
+
+      if (!idList.every((id) => typeof id === "number") || typeof action !== 'string') {
+        return new Response('Invalid product data', { status: 400 });
+      }
+      for (const id of idList) {
+        console.log("ahora vamos a db")
+        await updateProduct(id, name, desc, img, price, stock, visibility);
+      }
+      return NextResponse.json({ message: "Product updated" }, { status: 200 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unexpected exception"
+
+      return new Response(message, { status: 500 })
+    }
+  } else {
+    return new Response('Invalid action', { status: 400 });
   }
 }
 
 export async function DELETE(request) {
   try {
-    const { id } = await request.json();
-    console.log("delete", id);
-    if (typeof id === 'number') {
-      console.log("es numero");
-      await deleteProduct(id);
-      return NextResponse.json({ status: 200 });
+    const { searchParams } = new URL(request.url);
+    const ids = searchParams.getAll("id")
+    const idsInt = ids.map((id) => parseInt(id))
+    console.log(idsInt)
+    if (idsInt.every((id) => typeof id === "number")) {
+      console.log("going to delete")
+      for (const id of idsInt) {
+        await deleteProduct(id);
+      }
+      console.log("deleted")
+      return NextResponse.json({ message: "Products deleted" }, { status: 200 });
     } else {
       return new Response({ status: 400 });
     }

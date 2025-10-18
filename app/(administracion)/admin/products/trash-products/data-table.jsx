@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { act, useState } from "react"
 import Link from "next/link"
 
 export function DataTable({ columns, data }) {
@@ -44,9 +44,87 @@ export function DataTable({ columns, data }) {
             rowSelection,
         },
     });
-    const selectedIds = table.getFilteredSelectedRowModel().rows.map(
-        (row) => row.original.id
+
+    const selectedProduct = table.getFilteredSelectedRowModel().rows.map(
+        (row) => row.original
     );
+
+    async function handleRestore() {
+        const queryParams = selectedProduct.map(product => `id=${product.id}`).join('&');
+
+        try {
+            const promises = selectedProduct.map(async product => {
+                const response = await fetch(`/api/products?${queryParams}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: product.name,
+                        img: product.img,
+                        price: product.price,
+                        stock: product.stock,
+                        status: product.status,
+                        visibility: "public",
+                        action: "move"
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error restaurando producto ${product.id}: ${errorText}`);
+                }
+
+                return await response.json();
+            });
+
+            const results = await Promise.all(promises);
+
+            if (results.every(res => res.message === "Product updated")) {
+                setNotification({ type: 'success', message: 'Productos restaurados correctamente.' });
+            } else {
+                setNotification({ type: 'error', message: 'Error al restaurar productos.' });
+            }
+
+            setRowSelection([]);
+
+        } catch (error) {
+            console.error("Error restaurando productos:", error);
+            setNotification({ type: 'error', message: 'Error al restaurar productos.' });
+        }
+    }
+    async function handleDelete() {
+        const queryParams = selectedProduct.map(product => `id=${product.id}`).join('&');
+
+        try {
+            const promises = selectedProduct.map(async product => {
+                const response = await fetch(`/api/products?${queryParams}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error eliminando producto ${product.id}: ${errorText}`);
+                }
+
+                return await response.json();
+            });
+
+            const results = await Promise.all(promises);
+
+            if (results.every(res => res.message === "Products deleted")) {
+                setNotification({ type: 'success', message: 'Productos eliminados correctamente.' });
+            } else {
+                setNotification({ type: 'error', message: 'Error al eliminar productos.' });
+            }
+
+            setRowSelection([]);
+        } catch (error) {
+            console.error("Error eliminando productos:", error);
+            setNotification({ type: 'error', message: 'Error al eliminar productos.' });
+        }
+    }
+
 
     return (
         <div>
@@ -66,8 +144,8 @@ export function DataTable({ columns, data }) {
                         <Button variant="outline">Acciones</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled={!selectedIds.length}>Restaurar</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length}>Eliminar permanentemente</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedProduct.length} onClick={() => { handleRestore() }}>Restaurar</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedProduct.length} onClick={() => { handleDelete() }}>Eliminar permanentemente</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 

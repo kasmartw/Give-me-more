@@ -33,7 +33,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [rowSelection, setRowSelection] = useState({})
     const [notification, setNotification] = useState(null);
     const table = useReactTable({
-        data,
+        data: dataCurated,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -48,6 +48,10 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const selectedIds = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original.id
     );
+    const selectedProduct = table.getFilteredSelectedRowModel().rows.map(
+        (row) => row.original
+    );
+
     async function handleStatus(status) {
         const estadolocura = status ? true : false;
         const queryParams = selectedIds.map(id => `id=${id}`).join('&');
@@ -55,7 +59,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
             dataCurated.map((e) => {
                 if (selectedIds.includes(e.id)) {
                     return {
-                        id: e.id,
+                        ...e,
                         status: estadolocura
                     }
                 } else {
@@ -82,52 +86,44 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
         }
     }
     async function handleMoveToTrash() {
-        const data = dataCurated.filter((e) => selectedIds.includes(e.id));
+        const queryParams = selectedIds.map(id => `id=${id}`).join('&');
+
         try {
-            const postPromises = data.map((i) =>
-                fetch(`/api/products`, {
-                    method: "POST",
+            const promises = selectedProduct.map(async product => {
+                const response = await fetch(`/api/products?${queryParams}`, {
+                    method: 'PATCH',
                     headers: {
-                        "Content-Type": "application/json",
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        name: i.name,
-                        desc: i.desc,
-                        img: i.img,
-                        price: i.price,
-                        status: i.status,
-                        stock: i.stock,
-                        action: "moveToTrash",
+                        name: product.name,
+                        img: product.img,
+                        price: product.price,
+                        stock: product.stock,
+                        status: product.status,
+                        visibility: "trash",
+                        action: "move"
                     }),
-                })
-            );
+                });
 
-            const postResponses = await Promise.all(postPromises);
-
-            if (postResponses.every((res) => res.ok)) {
-                const deletePromises = data.map((i) =>
-                    fetch(`/api/products`, {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ id: i.id }),
-                    })
-                );
-                setRowSelection([])
-                const deleteResponses = await Promise.all(deletePromises);
-
-                if (deleteResponses.every((res) => res.ok)) {
-                    setNotification({ type: 'success', message: 'Productos movidos a la papelera correctamente.' });
-                } else {
-                    setNotification({ type: 'error', message: 'Error al eliminar productos después de moverlos.' });
+                if (!response.ok) {
+                    throw new Error(`Error restaurando producto ${product.id}`);
                 }
+                return await response.json();
+            });
+            const results = await Promise.all(promises);
+            if (results.every(res => res.message === "Product updated")) {
+                setNotification({ type: 'success', message: 'Productos movidos a la papelera correctamente.' });
+                setDataCurated(dataCurated.filter((e) => !selectedIds.includes(e.id)));
             } else {
                 setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' });
             }
+            setDataCurated(
+                dataCurated.filter((e) => !selectedIds.includes(e.id))
+            );
+            setRowSelection([]);
         } catch (error) {
-            setNotification({ type: 'error', message: 'Error en el proceso de mover a la papelera.' });
-            console.error("Error in handleMoveToTrash:", error);
+            console.log("Error de red al intentar mover a la papelera:", error);
         }
     }
 

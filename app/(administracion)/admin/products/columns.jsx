@@ -94,57 +94,59 @@ export const columns = [
         accessorKey: "status",
         header: () => <div className="text-center">Estado</div>,
         cell: ({ row }) => {
-            const { dataCurated, setDataCurated } = useProduct([{}]);
+            const { dataCurated, setDataCurated } = useProduct();
             const product = row.original
 
-            const handleStatusChange = async () => {
-                setDataCurated(
-                    dataCurated.map((e) => {
-                        if (product.id == e.id) {
-                            return {
-                                id: e.id,
-                                status: !e.status
-                            }
-                        } else {
-                            return e
-                        }
-                    })
-                )
+            // Busca el producto de forma segura en el estado global
+            const productFromState = dataCurated.find(p => p.id === product.id);
 
+            // Si el producto no se encuentra, devuelve null para no renderizar nada y evitar el crash.
+            if (!productFromState) {
+                return null;
+            }
+
+            const currentStatus = productFromState.status;
+
+            const handleStatusChange = async () => {
+                // Actualiza la UI de forma optimista
+                setDataCurated(
+                    dataCurated.map((p) => {
+                        if (product.id === p.id) {
+                            // Correcto: preserva las otras propiedades del producto
+                            return { ...p, status: !p.status };
+                        }
+                        return p;
+                    })
+                );
+
+                // Realiza la llamada a la API
                 try {
                     const response = await fetch(`/api/products?id=${product.id}`, {
                         method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            id: product.id, action: "status", status: !dataCurated.filter((e) => {
-                                return e.id == product.id
-                            })[0].status
-                        }),
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: "status", status: !currentStatus }),
                     });
 
                     if (!response.ok) {
-                        console.error("Error al actualizar. Revertiendo cambio.");
+                        // Si la API falla, revierte el cambio en la UI
+                        setDataCurated(dataCurated); 
                     }
                 } catch (error) {
-                    console.error("Error de red al intentar actualizar el estado:", error);
+                    // Si hay un error de red, también revierte
+                    console.error("Error de red:", error);
+                    setDataCurated(dataCurated);
                 }
             }
 
-
-
             return (
                 <div className="flex items-center justify-center gap-2">
-                    <Switch checked={
-                        dataCurated.filter((e) => {
-                            return e.id == product.id
-                        })[0].status
-                    } onCheckedChange={handleStatusChange} />
-                    <span className="capitalize w-14 text-left">{dataCurated.filter((e) => {
-                        return e.id == product.id
-                    })[0].status ? "Activo" : "Inactivo"}</span>
-
+                    <Switch
+                        checked={currentStatus}
+                        onCheckedChange={handleStatusChange}
+                    />
+                    <span className="capitalize w-14 text-left">
+                        {currentStatus ? "Activo" : "Inactivo"}
+                    </span>
                 </div>
             )
         },

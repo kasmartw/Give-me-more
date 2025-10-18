@@ -110,11 +110,50 @@ export const columns = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => {
+                        <DropdownMenuItem onClick={async () => {
+                            try {
+                                const response = await fetch(`/api/products?id=${product.id}`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        name: product.name,
+                                        img: product.img,
+                                        price: product.price,
+                                        stock: product.stock,
+                                        status: product.status,
+                                        visibility: "public",
+                                        action: "move"
+                                    }),
+                                });
 
+                                if (!response.ok) {
+                                    console.log(`Error restaurando producto ${product.id}`);
+                                }
+
+                                return await response.json();
+                            } catch (error) {
+                                console.log(error)
+                            }
                         }}
                         >Restaurar</DropdownMenuItem>
-                        <DropdownMenuItem>Eliminar permanentemente</DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                            try {
+                                const response = await fetch(`/api/products?id=${product.id}`, {
+                                    method: 'DELETE',
+                                });
+
+                                if (!response.ok) {
+                                    console.log(`Error eliminando producto ${product.id}`);
+                                }
+
+                                return await response.json();
+                            } catch (error) {
+                                console.error("Error eliminando productos:", error);
+                            }
+                        }}
+                        >Eliminar permanentemente</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu >
             )
