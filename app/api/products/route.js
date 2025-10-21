@@ -38,7 +38,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     console.log("post")
-    const { action, name, desc, img, price, stock, status } = await request.json();
+    const { action, name, desc, img, price, stock, status, visibility } = await request.json();
     const priceFloat = Number(price);
     const statusBool = typeof status === 'boolean' ? status : (status === 'active');
     const stockInt = parseInt(stock);
@@ -48,7 +48,9 @@ export async function POST(request) {
       console.log("create")
 
       if (isValidProduct(name, desc, img, priceFloat, statusBool, stockInt)) {
-        await createProduct(name, desc, img, priceFloat, statusBool, stockInt);
+        console.log("es valido")
+        await createProduct(name, desc, img, priceFloat, statusBool, stockInt, visibility);
+        console.log("se creo")
         return NextResponse.json({ status: 201 });
       } else {
         return new Response('Invalid product data', { status: 400 });

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 export default function EditUser() {
     const params = useParams();
     const [res, setRes] = useState({})
+    const [notification, setNotification] = useState(null);
     const [pass, setPass] = useState({
         newPass: "",
         confirmPass: ""
@@ -53,17 +54,28 @@ export default function EditUser() {
                 body: JSON.stringify({ id: res.id, password: pass.newPass, username: res.username }),
             })
             if (response.ok) {
-                alert('Contraseña cambiada')
+                setNotification({ message: 'Contraseña actualizada correctamente', type: 'success' })
+                setPass({
+                    newPass: "",
+                    confirmPass: ""
+                })
             } else {
-                alert('Error en la peticion')
+                setNotification({ message: 'Error al actualizar la contraseña', type: 'error' })
             }
         } catch (error) {
             console.error(error)
+            setNotification({ message: 'Error al actualizar la contraseña', type: 'error' })
         }
     }
     return (
         <div>
             <div className="flex flex-col">
+                {notification && (
+                    <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                        {notification.message}
+                        <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
+                    </div>
+                )}
                 <h1 className="text-2xl font-bold mb-4">Usuario a editar: {res.username}</h1>
             </div>
             <div className="flex flex-col">

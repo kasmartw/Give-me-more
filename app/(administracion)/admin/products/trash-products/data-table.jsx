@@ -24,15 +24,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
-import { act, useState } from "react"
-import Link from "next/link"
+import { useState } from "react"
 
-export function DataTable({ columns, data }) {
+
+export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([]);
     const [rowSelection, setRowSelection] = useState({});
     const [notification, setNotification] = useState(null);
     const table = useReactTable({
-        data,
+        data: dataCurated,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -47,6 +47,9 @@ export function DataTable({ columns, data }) {
 
     const selectedProduct = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original
+    );
+    const selectedIds = table.getFilteredSelectedRowModel().rows.map(
+        (row) => row.original.id
     );
 
     async function handleRestore() {
@@ -82,10 +85,12 @@ export function DataTable({ columns, data }) {
 
             if (results.every(res => res.message === "Product updated")) {
                 setNotification({ type: 'success', message: 'Productos restaurados correctamente.' });
+                setDataCurated(
+                    dataCurated.filter((e) => !selectedIds.includes(e.id))
+                );
             } else {
                 setNotification({ type: 'error', message: 'Error al restaurar productos.' });
             }
-
             setRowSelection([]);
 
         } catch (error) {
@@ -114,10 +119,12 @@ export function DataTable({ columns, data }) {
 
             if (results.every(res => res.message === "Products deleted")) {
                 setNotification({ type: 'success', message: 'Productos eliminados correctamente.' });
+                setDataCurated(
+                    dataCurated.filter((e) => !selectedIds.includes(e.id))
+                );
             } else {
                 setNotification({ type: 'error', message: 'Error al eliminar productos.' });
             }
-
             setRowSelection([]);
         } catch (error) {
             console.error("Error eliminando productos:", error);

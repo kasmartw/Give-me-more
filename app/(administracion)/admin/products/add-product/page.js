@@ -12,6 +12,8 @@ export default function AddProductPage() {
         status: true
     })
     const [isDisabledButton, setIsDisabledButton] = useState(false)
+    const [notification, setNotification] = useState(null);
+
 
     async function addNewProduct() {
         setIsDisabledButton(true);
@@ -41,12 +43,12 @@ export default function AddProductPage() {
                     img: values.img,
                     price: priceFloat,
                     stock: stockInt,
-                    status: values.status
+                    status: values.status,
+                    visibility: "public"
                 }),
             });
 
             if (res.ok) {
-                alert("Producto agregado");
                 setValues({
                     name: '',
                     desc: '',
@@ -56,18 +58,25 @@ export default function AddProductPage() {
                     status: true
                 });
                 setIsDisabledButton(false);
+                setNotification({ type: 'success', message: 'Producto agregado exitosamente.' });
             } else {
-                alert("Error en la respuesta del servidor");
+                setIsDisabledButton(false);
+                setNotification({ type: 'error', message: 'Error al agregar el producto.' });
             }
         } catch (error) {
-            console.error("Error adding product:", error);
-            alert("Error al agregar producto");
+            setNotification({ type: 'error', message: 'Error de red al agregar el producto.' });
             setIsDisabledButton(false);
         }
     };
 
     return (
         <div>
+            {notification && (
+                <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {notification.message}
+                    <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
+                </div>
+            )}
             <div className="flex flex-col">
                 <h1 className="text-2xl font-bold mb-4">Agregar producto</h1>
             </div>

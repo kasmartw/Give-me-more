@@ -97,10 +97,10 @@ export const columns = [
             const { dataCurated, setDataCurated } = useProduct();
             const product = row.original
 
-            // Busca el producto de forma segura en el estado global
+
             const productFromState = dataCurated.find(p => p.id === product.id);
 
-            // Si el producto no se encuentra, devuelve null para no renderizar nada y evitar el crash.
+
             if (!productFromState) {
                 return null;
             }
@@ -108,18 +108,18 @@ export const columns = [
             const currentStatus = productFromState.status;
 
             const handleStatusChange = async () => {
-                // Actualiza la UI de forma optimista
+
                 setDataCurated(
                     dataCurated.map((p) => {
                         if (product.id === p.id) {
-                            // Correcto: preserva las otras propiedades del producto
+
                             return { ...p, status: !p.status };
                         }
                         return p;
                     })
                 );
 
-                // Realiza la llamada a la API
+
                 try {
                     const response = await fetch(`/api/products?id=${product.id}`, {
                         method: 'PATCH',
@@ -128,11 +128,11 @@ export const columns = [
                     });
 
                     if (!response.ok) {
-                        // Si la API falla, revierte el cambio en la UI
-                        setDataCurated(dataCurated); 
+
+                        setDataCurated(dataCurated);
                     }
                 } catch (error) {
-                    // Si hay un error de red, también revierte
+
                     console.error("Error de red:", error);
                     setDataCurated(dataCurated);
                 }
@@ -154,6 +154,7 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
+            const { dataCurated, setDataCurated } = useProduct();
             const product = row.original
             return (
                 <DropdownMenu>
@@ -171,7 +172,33 @@ export const columns = [
                         <DropdownMenuItem>
                             <Link href={`/admin/products/edit-product/${product.id}`}>Editar producto</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Mover a la papelera</DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                            try {
+                                const response = await fetch(`/api/products?id=${product.id}`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        name: product.name,
+                                        img: product.img,
+                                        price: product.price,
+                                        stock: product.stock,
+                                        status: product.status,
+                                        visibility: "trash",
+                                        action: "move"
+                                    }),
+                                });
+
+                                if (!response.ok) {
+                                    console.log(`Error moviendo producto ${product.id}`);
+                                }
+                                setDataCurated(dataCurated.filter((e) => e.id !== product.id))
+                                return await response.json();
+                            } catch (error) {
+                                console.log(error)
+                            }
+                        }}>Mover a la papelera</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu >
             )

@@ -10,6 +10,7 @@ import {
 import { MoreHorizontal } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useProduct } from "@/components/contextoGlobal"
 
 
 
@@ -99,7 +100,9 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
+            const { dataCurated, setDataCurated } = useProduct();
             const product = row.original
+
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -131,7 +134,7 @@ export const columns = [
                                 if (!response.ok) {
                                     console.log(`Error restaurando producto ${product.id}`);
                                 }
-
+                                setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 return await response.json();
                             } catch (error) {
                                 console.log(error)
@@ -147,7 +150,7 @@ export const columns = [
                                 if (!response.ok) {
                                     console.log(`Error eliminando producto ${product.id}`);
                                 }
-
+                                setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 return await response.json();
                             } catch (error) {
                                 console.error("Error eliminando productos:", error);
