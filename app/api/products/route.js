@@ -22,6 +22,10 @@ export async function GET(request) {
       console.log("productos en la papelera")
       const allProducts = await readProducts("trash");
       return NextResponse.json(allProducts, { status: 200 });
+    } else if (from === "draft") {
+      console.log("productos en borrador")
+      const allProducts = await readProducts("draft");
+      return NextResponse.json(allProducts, { status: 200 });
     }
     else {
       console.log("algunos productos")
@@ -104,13 +108,14 @@ export async function PATCH(request) {
     try {
       const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
 
-      if (!idList.every((id) => typeof id === "number") || typeof name !== 'string' || typeof desc !== 'string' || typeof img !== 'string' || typeof price !== 'number') {
-        return new Response('Invalid product data', { status: 400 });
-      }
-      for (const id of idList) {
-        console.log("ahora vamos a db")
-        await updateProduct(id, name, desc, img, price, stock, visibility);
-      }
+      const priceFloat = parseFloat(price);
+      const stockInt = parseInt(stock);
+              if (!idList.every((id) => typeof id === "number") || typeof name !== 'string' || typeof desc !== 'string' || typeof img !== 'string' || typeof priceFloat !== 'number') {
+                return new Response('Invalid product data', { status: 400 });
+              }
+              for (const id of idList) {
+                console.log("ahora vamos a db")
+                await updateProduct(id, name, desc, img, priceFloat, stockInt, visibility);      }
       return NextResponse.json({ message: "Product updated" }, { status: 200 });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unexpected exception"

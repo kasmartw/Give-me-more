@@ -1,39 +1,41 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
-import { useEffect, useState } from "react"
-import { useUser } from "@/components/globalContextUsers"
+import { useProduct } from "@/components/contextoGlobal"
 
-
-export default function AdminPage() {
+export default function ProductsPage() {
+    const { dataCurated, setDataCurated } = useProduct()
     const [data, setData] = useState([])
-    const { dataCurated, setDataCurated } = useUser()
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await fetch("/api/users", {
+                const res = await fetch("/api/products?from=draft", {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                 })
 
                 if (res.ok) {
-                    const users = await res.json()
-                    setData(users)
+                    const products = await res.json()
+                    const ordenedProducts = products.sort((a, b) => a.name.localeCompare(b.name))
+                    setData(ordenedProducts)
                     setDataCurated(
-                        users.map((e) => {
+                        products.map((e) => {
                             return {
                                 id: e.id,
-                                username: e.username,
-                                email: e.email,
-                                role: e.role
+                                name: e.name,
+                                desc: e.desc,
+                                img: e.img,
+                                price: e.price,
+                                stock: e.stock,
+                                status: e.status
                             }
                         })
                     )
-                    console.log("usuarios cargados")
                 } else {
-                    console.error("Error al cargar usuarios")
+                    console.error("Error al cargar productos")
                 }
             } catch (err) {
                 console.error(err)
@@ -42,9 +44,8 @@ export default function AdminPage() {
 
         fetchData()
     }, [])
-
-
     return (
+
         <div className="container mx-auto py-10">
             <DataTable columns={columns} data={data} dataCurated={dataCurated} setDataCurated={setDataCurated} />
         </div>

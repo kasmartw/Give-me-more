@@ -1,5 +1,4 @@
-"use client"
-
+"use client";
 import {
     flexRender,
     getCoreRowModel,
@@ -26,11 +25,11 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import Link from "next/link"
+
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
-    const [sorting, setSorting] = useState([])
-    const [rowSelection, setRowSelection] = useState({})
+    const [sorting, setSorting] = useState([]);
+    const [rowSelection, setRowSelection] = useState({});
     const [notification, setNotification] = useState(null);
     const table = useReactTable({
         data: dataCurated,
@@ -44,87 +43,46 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
             sorting,
             rowSelection,
         },
-    })
-    const selectedIds = table.getFilteredSelectedRowModel().rows.map(
-        (row) => row.original.id
-    );
+    });
+
     const selectedProduct = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original
     );
+    const selectedIds = table.getFilteredSelectedRowModel().rows.map(
+        (row) => row.original.id
+    );
 
-    async function handleStatus(status) {
-        const estadolocura = status ? true : false;
-        const queryParams = selectedIds.map(id => `id=${id}`).join('&');
-        setDataCurated(
-            dataCurated.map((e) => {
-                if (selectedIds.includes(e.id)) {
-                    return {
-                        ...e,
-                        status: estadolocura
-                    }
-                } else {
-                    return e
-                }
-            })
-        )
-        try {
-            const response = await fetch(`/api/products?${queryParams}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    status: status, action: "status"
-                }),
-            });
-            if (!response.ok) {
-                console.error("Error al actualizar. Revertiendo cambio.");
-            }
-            setRowSelection([])
-        } catch (error) {
-            console.error("Error de red al intentar actualizar el estado:", error);
-        }
-    }
-    async function handleMoveToTrash() {
-        const queryParams = selectedIds.map(id => `id=${id}`).join('&');
+    async function handleDelete() {
+        const queryParams = selectedProduct.map(product => `id=${product.id}`).join('&');
 
         try {
             const promises = selectedProduct.map(async product => {
                 const response = await fetch(`/api/products?${queryParams}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: product.name,
-                        img: product.img,
-                        price: product.price,
-                        stock: product.stock,
-                        status: product.status,
-                        visibility: "trash",
-                        action: "move"
-                    }),
+                    method: 'DELETE',
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Error restaurando producto ${product.id}`);
+                    const errorText = await response.text();
+                    throw new Error(`Error eliminando producto ${product.id}: ${errorText}`);
                 }
+
                 return await response.json();
             });
+
             const results = await Promise.all(promises);
-            if (results.every(res => res.message === "Product updated")) {
-                setNotification({ type: 'success', message: 'Productos movidos a la papelera correctamente.' });
-                setDataCurated(dataCurated.filter((e) => !selectedIds.includes(e.id)));
+
+            if (results.every(res => res.message === "Products deleted")) {
+                setNotification({ type: 'success', message: 'Productos eliminados correctamente.' });
+                setDataCurated(
+                    dataCurated.filter((e) => !selectedIds.includes(e.id))
+                );
             } else {
-                setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' });
+                setNotification({ type: 'error', message: 'Error al eliminar productos.' });
             }
-            setDataCurated(
-                dataCurated.filter((e) => !selectedIds.includes(e.id))
-            );
             setRowSelection([]);
         } catch (error) {
-            console.log("Error de red al intentar mover a la papelera:", error);
-            setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' })
+            console.error("Error eliminando productos:", error);
+            setNotification({ type: 'error', message: 'Error al eliminar productos.' });
         }
     }
 
@@ -146,14 +104,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         <Button variant="outline">Acciones</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled={!selectedIds.length}>
-                            <Link href={`/admin/products/edit-product/${selectedIds.join('/')}`}>
-                                Editar precio e inventario
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleMoveToTrash()}>Mover a la papelera</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(true)}>Activar productos</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(false)}>Desactivar productos</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedProduct.length} onClick={() => { handleDelete() }}>Eliminar permanentemente</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -173,7 +124,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                                                     header.getContext()
                                                 )}
                                         </TableHead>
-                                    )
+                                    );
                                 })}
                             </TableRow>
                         ))}
@@ -209,7 +160,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
                 >
-                    Anterior
+                    Previous
                 </Button>
                 <Button
                     variant="outline"
@@ -217,9 +168,9 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
                 >
-                    Siguiente
+                    Next
                 </Button>
             </div>
-        </div >
-    )
+        </div>
+    );
 }

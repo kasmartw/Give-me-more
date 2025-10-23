@@ -115,7 +115,7 @@ export async function DELETE(request) {
         if (typeof idInt === 'number') {
             console.log(`Deleting user with id: ${idInt}`);
             await deleteUser(idInt);
-            return NextResponse.json({ status: 200 });
+            return NextResponse.json({ message: "User deleted" }, { status: 200 });
         } else {
             return new Response({ status: 400 });
         }

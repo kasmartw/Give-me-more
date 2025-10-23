@@ -1,11 +1,11 @@
 "use client"
 
 import {
-    ColumnDef,
     flexRender,
     getCoreRowModel,
     getPaginationRowModel,
     useReactTable,
+    getSortedRowModel,
 } from "@tanstack/react-table"
 
 import {
@@ -24,44 +24,71 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
 
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
+    const [sorting, setSorting] = useState([])
+    const [rowSelection, setRowSelection] = useState({})
+    const [notification, setNotification] = useState(null);
     const table = useReactTable({
         data: dataCurated,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onRowSelectionChange: setRowSelection,
+        onSortingChange: setSorting,
+        state: {
+            sorting,
+            rowSelection,
+        },
     })
     const selectedIds = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original.id
     );
+
     async function handleDeleteUser() {
-        console.log("dataCurated.length:", dataCurated.length)
-        console.log("selectedIds.length:", selectedIds.length)
         if (dataCurated.length === selectedIds.length) return;
         console.log(selectedIds)
         try {
             const promise = selectedIds.map(async (id) => {
-                await fetch('/api/users', {
+                const resp = await fetch('/api/users', {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ id }),
                 });
+                if (!resp.ok) {
+                    throw new Error('Error al eliminar usuario');
+                }
+                return await resp.json();
+
             });
-            await Promise.all(promise);
-            setDataCurated(
-                dataCurated.filter((e) => !selectedIds.includes(e.id))
-            )
-            alert('Usuarios eliminados');
+
+            const allResp = await Promise.all(promise);
+
+            if (allResp.every(res => res.message === "User deleted")) {
+                setNotification({ type: 'success', message: 'Usuarios eliminados correctamente.' });
+                setDataCurated(dataCurated.filter((e) => !selectedIds.includes(e.id)));
+            } else {
+                setNotification({ type: 'error', message: 'Error al eliminar usuarios.' });
+            }
+            setRowSelection([]);
         } catch (error) {
             console.error(error);
+            setNotification({ type: 'error', message: 'Error al eliminar usuarios.' });
         }
     }
     return (
         <div>
+            {notification && (
+                <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {notification.message}
+                    <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
+                </div>
+            )}
             <div className="flex flex-row">
                 <div className="text-muted-foreground flex-1 text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}

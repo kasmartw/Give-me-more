@@ -69,6 +69,56 @@ export default function AddProductPage() {
         }
     };
 
+    async function saveNewProduct() {
+        const priceFloat = parseFloat(values.price)
+        const stockInt = parseInt(values.stock)
+        let price = isNaN(priceFloat) ? 0 : priceFloat
+        let stock = isNaN(stockInt) ? 0 : stockInt
+        let name = values.name = true ? values.name : "Nombre del producto"
+        let desc = values.desc = true ? values.desc : "Descripción del producto"
+        let img = values.img = true ? values.img : "URL de la imagen del producto"
+        setIsDisabledButton(true);
+
+        try {
+
+            const res = await fetch('/api/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: "create",
+                    name,
+                    desc,
+                    img,
+                    price,
+                    stock,
+                    status: values.status,
+                    visibility: "draft"
+                }),
+            });
+
+            if (res.ok) {
+                setValues({
+                    name: '',
+                    desc: '',
+                    img: '',
+                    price: '',
+                    stock: '',
+                    status: true
+                });
+                setIsDisabledButton(false);
+                setNotification({ type: 'success', message: 'Producto guardado exitosamente.' });
+            } else {
+                setIsDisabledButton(false);
+                setNotification({ type: 'error', message: 'Error al guardar el producto.' });
+            }
+        } catch (error) {
+            setNotification({ type: 'error', message: 'Error de red al guardar el producto.' });
+            setIsDisabledButton(false);
+        }
+    };
+
     return (
         <div>
             {notification && (
@@ -150,12 +200,18 @@ export default function AddProductPage() {
                 onClick={() => addNewProduct()}
                 disabled={isDisabledButton}
                 type="submit"
+                className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 mr-6"
+            >
+                Crear
+            </button>
+            <button
+                onClick={() => saveNewProduct()}
+                disabled={isDisabledButton}
+                type="submit"
                 className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
             >
-                Guardar
+                Guardar para despues
             </button>
         </div>
     );
-
-
 }

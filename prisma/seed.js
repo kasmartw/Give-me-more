@@ -1,15 +1,13 @@
 import { PrismaClient } from '../app/generated/prisma/index.js'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
-// Función para limpiar strings de bytes nulos y caracteres problemáticos
+// ===== LIMPIADOR DE STRINGS =====
 function cleanString(str) {
-    if (typeof str !== 'string') return str;
-    // Elimina bytes nulos (0x00) y otros caracteres de control problemáticos
-    return str.replace(/\0/g, '').replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '');
+    if (typeof str !== 'string') return str
+    return str.replace(/\0/g, '').replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
 }
 
-// Función para limpiar todos los campos string de un objeto
 function cleanProductData(product) {
     return {
         name: cleanString(product.name),
@@ -19,9 +17,10 @@ function cleanProductData(product) {
         status: product.status,
         stock: product.stock,
         visibility: cleanString(product.visibility)
-    };
+    }
 }
 
+// ===== DATA DE PRODUCTOS =====
 const productData = [
     { name: "Muneca", desc: "for girls", img: "muneca.jpg", price: 18.50, status: true, stock: 21, visibility: "public" },
     { name: "Casa", desc: "for girls", img: "casa.jpg", price: 32.30, status: false, stock: 0, visibility: "trash" },
@@ -60,90 +59,122 @@ const admins = [
     { username: "jose", email: "jose@gmail.com", role: "admin", password: "jose24" },
     { username: "luis", email: "luis@gmail.com", role: "admin", password: "luis24" },
 ]
-export async function createProducts() {
-    // Limpia todos los productos antes de insertarlos
-    const cleanedProducts = productData.map(cleanProductData);
 
-    await prisma.product.createMany({
-        data: cleanedProducts,
-        skipDuplicates: true,
-    });
+const users = [
+    { name: "Alice", email: "alice@prisma.io", number: "1234567890" },
+    { name: "Bob", email: "bob@prisma.io", number: "0987654321" },
+    { name: "Carlos", email: "carlos@toyshop.com", number: "1112223333" },
+    { name: "Diana", email: "diana@toyshop.com", number: "4445556666" },
+]
 
-    console.log('✅ Productos creados exitosamente');
+// ===== FUNCIONES DE CREACIÓN =====
+async function createProducts() {
+    const cleanedProducts = productData.map(cleanProductData)
+    await prisma.product.createMany({ data: cleanedProducts, skipDuplicates: true })
+    console.log('✅ Productos creados')
 }
 
-async function main() {
-    try {
-        await createProducts();
+async function createAdmins() {
+    await prisma.admin.createMany({ data: admins, skipDuplicates: true })
+    console.log('✅ Admins creados')
+}
 
-        await prisma.admin.createMany({
-            data: admins,
-            skipDuplicates: true,
-        });
-
-
-
+async function createUsersAndOrders() {
+    for (const user of users) {
         await prisma.user.upsert({
-            where: { email: "alice@prisma.io" },
+            where: { email: user.email },
             update: {},
             create: {
-                name: "Alice",
-                email: "alice@prisma.io",
-                number: "1234567890",
+                ...user,
                 order: {
-                    create: [
-                        {
-                            total: 100,
-                            orderItem: {
-                                create: [
-                                    {
-                                        quantity: 2,
-                                        productId: 1,
-                                    }
-                                ]
-                            }
-                        }
-                    ]
+                    create: generateOrdersForUser(user.name)
                 }
             }
-        });
+        })
+    }
+    console.log('✅ Usuarios y órdenes creados')
+}
 
-        await prisma.user.upsert({
-            where: { email: "bob@prisma.io" },
-            update: {},
-            create: {
-                name: "Bob",
-                email: "bob@prisma.io",
-                number: "0987654321",
-                order: {
-                    create: [
-                        {
-                            total: 200,
-                            orderItem: {
-                                create: [
-                                    {
-                                        quantity: 1,
-                                        productId: 2,
-                                    }
-                                ]
-                            }
-                        }
-                    ]
+// ===== GENERADOR DE ÓRDENES =====
+function generateOrdersForUser(name) {
+    switch (name) {
+        case "Alice":
+            return [
+                {
+                    total: 100,
+                    orderItem: {
+                        create: [
+                            { quantity: 2, productId: 1 }, // Muneca
+                            { quantity: 1, productId: 6 }, // Lego
+                        ]
+                    }
                 }
-            }
-        });
-
-        console.log('✅ Seed completado exitosamente');
-    } catch (error) {
-        console.error('❌ Error durante el seed:', error);
-        throw error;
-    } finally {
-        await prisma.$disconnect();
+            ]
+        case "Bob":
+            return [
+                {
+                    total: 180,
+                    orderItem: {
+                        create: [
+                            { quantity: 1, productId: 9 }, // Bicicleta
+                            { quantity: 2, productId: 3 }, // Pelota
+                        ]
+                    }
+                }
+            ]
+        case "Carlos":
+            return [
+                {
+                    total: 220,
+                    orderItem: {
+                        create: [
+                            { quantity: 1, productId: 19 }, // Tablet Ninos
+                            { quantity: 2, productId: 18 }, // Bloques Madera
+                        ]
+                    }
+                },
+                {
+                    total: 60,
+                    orderItem: {
+                        create: [
+                            { quantity: 3, productId: 15 }, // Puzzle 3D
+                        ]
+                    }
+                }
+            ]
+        case "Diana":
+            return [
+                {
+                    total: 95,
+                    orderItem: {
+                        create: [
+                            { quantity: 1, productId: 23 }, // Coche Control
+                            { quantity: 2, productId: 11 }, // Peluche Oso
+                        ]
+                    }
+                }
+            ]
+        default:
+            return []
     }
 }
 
-main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    });
+// ===== MAIN =====
+async function main() {
+    try {
+        await createProducts()
+        await createAdmins()
+        await createUsersAndOrders()
+        console.log('🎉 Seed completado exitosamente')
+    } catch (error) {
+        console.error('❌ Error durante el seed:', error)
+        throw error
+    } finally {
+        await prisma.$disconnect()
+    }
+}
+
+main().catch((e) => {
+    console.error(e)
+    process.exit(1)
+})

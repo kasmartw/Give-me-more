@@ -47,7 +47,7 @@ const data = {
         },
         {
           title: "Guardados",
-          url: "#"
+          url: "/admin/products/draft-products"
         }
       ],
     },
@@ -68,15 +68,14 @@ const data = {
     {
       title: "Pedidos",
       icon: Boxes,
-      url: "#",
       items: [
         {
           title: "Todos los pedidos",
-          url: "#",
+          url: "/admin/orders",
         },
         {
           title: "Agregar pedido",
-          url: "#",
+          url: "/admin/orders/add-order",
         },
       ],
     },

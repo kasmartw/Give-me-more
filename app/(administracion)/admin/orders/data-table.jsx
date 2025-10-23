@@ -3,8 +3,8 @@
 import {
     flexRender,
     getCoreRowModel,
-    useReactTable,
     getPaginationRowModel,
+    useReactTable,
     getSortedRowModel,
 } from "@tanstack/react-table"
 
@@ -14,19 +14,18 @@ import {
     TableCell,
     TableHead,
     TableHeader,
+
     TableRow,
 } from "@/components/ui/table"
-
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import Link from "next/link"
+
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
@@ -48,86 +47,39 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const selectedIds = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original.id
     );
-    const selectedProduct = table.getFilteredSelectedRowModel().rows.map(
+    const selectedOrders = table.getFilteredSelectedRowModel().rows.map(
         (row) => row.original
     );
-
-    async function handleStatus(status) {
-        const estadolocura = status ? true : false;
-        const queryParams = selectedIds.map(id => `id=${id}`).join('&');
-        setDataCurated(
-            dataCurated.map((e) => {
-                if (selectedIds.includes(e.id)) {
-                    return {
-                        ...e,
-                        status: estadolocura
+    async function handleDeleteOrders() {
+        try {
+            const deletedIds = await Promise.all(
+                selectedOrders.map(async (order) => {
+                    const id = Number(order.id);
+                    const resp = await fetch('/api/orders', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) {
+                        throw new Error(data.message || 'Error al eliminar pedido');
                     }
-                } else {
-                    return e
-                }
-            })
-        )
-        try {
-            const response = await fetch(`/api/products?${queryParams}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    status: status, action: "status"
-                }),
-            });
-            if (!response.ok) {
-                console.error("Error al actualizar. Revertiendo cambio.");
-            }
-            setRowSelection([])
-        } catch (error) {
-            console.error("Error de red al intentar actualizar el estado:", error);
-        }
-    }
-    async function handleMoveToTrash() {
-        const queryParams = selectedIds.map(id => `id=${id}`).join('&');
-
-        try {
-            const promises = selectedProduct.map(async product => {
-                const response = await fetch(`/api/products?${queryParams}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: product.name,
-                        img: product.img,
-                        price: product.price,
-                        stock: product.stock,
-                        status: product.status,
-                        visibility: "trash",
-                        action: "move"
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Error restaurando producto ${product.id}`);
-                }
-                return await response.json();
-            });
-            const results = await Promise.all(promises);
-            if (results.every(res => res.message === "Product updated")) {
-                setNotification({ type: 'success', message: 'Productos movidos a la papelera correctamente.' });
-                setDataCurated(dataCurated.filter((e) => !selectedIds.includes(e.id)));
-            } else {
-                setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' });
-            }
-            setDataCurated(
-                dataCurated.filter((e) => !selectedIds.includes(e.id))
+                    return id;
+                })
             );
-            setRowSelection([]);
+
+            setNotification({ type: 'success', message: 'Pedidos eliminados correctamente.' });
+            setDataCurated((prev) =>
+                prev.filter((row) => !deletedIds.includes(Number(row.id)))
+            );
+            table.resetRowSelection();
         } catch (error) {
-            console.log("Error de red al intentar mover a la papelera:", error);
-            setNotification({ type: 'error', message: 'Error al mover productos a la papelera.' })
+            console.error(error);
+            setNotification({ type: 'error', message: error.message || 'Error al eliminar pedidos.' });
         }
     }
-
     return (
         <div>
             {notification && (
@@ -146,17 +98,9 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         <Button variant="outline">Acciones</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled={!selectedIds.length}>
-                            <Link href={`/admin/products/edit-product/${selectedIds.join('/')}`}>
-                                Editar precio e inventario
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleMoveToTrash()}>Mover a la papelera</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(true)}>Activar productos</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(false)}>Desactivar productos</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleDeleteOrders()}>Eliminar Pedido</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
@@ -220,6 +164,6 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     Siguiente
                 </Button>
             </div>
-        </div >
+        </div>
     )
 }
