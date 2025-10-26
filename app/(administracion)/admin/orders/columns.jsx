@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
+import { useOrder } from "@/components/globalContextOrders"
 
 export const columns = [
     {
@@ -66,7 +67,29 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
-            const user = row.original
+            const { dataCurated, setDataCurated } = useOrder()
+            const order = row.original
+            async function handleDeleteOrder() {
+                try {
+                    const id = Number(order.id);
+                    const resp = await fetch('/api/orders', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id }),
+                    });
+
+                    const data = await resp.json();
+                    if (!resp.ok) {
+                        throw new Error(data.message || 'Error al eliminar pedido');
+                    }
+
+                    setDataCurated(dataCurated.filter((row) => row.id !== id));
+                } catch (error) {
+                    console.error(error);
+                }
+            }
 
             return (
                 <DropdownMenu>
@@ -77,12 +100,12 @@ export const columns = [
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { }}>Eliminar compra</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteOrder()}>Eliminar compra</DropdownMenuItem>
                         <DropdownMenuItem>
-                            <Link href={`#`}>Actualizar compra</Link>
+                            <Link href={`/admin/orders/update-order/${order.id}`}>Actualizar compra</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                            <Link href={`#`}>Ver detalle de la compra</Link>
+                            <Link href={`/admin/orders/order-details/${order.id}`}>Ver detalle de la compra</Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

@@ -49,7 +49,10 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     );
 
     async function handleDeleteUser() {
-        if (dataCurated.length === selectedIds.length) return;
+        if (dataCurated.length === selectedIds.length) {
+            setNotification({ type: 'error', message: 'No puedes eliminar todos los usuarios.' });
+            return;
+        }
         console.log(selectedIds)
         try {
             const promise = selectedIds.map(async (id) => {

@@ -20,9 +20,9 @@ export async function GET(request) {
             const message = error instanceof Error ? error.message : "Error inesperado";
             return NextResponse.json({ message }, { status: 500 });
         }
-    } else {
+    } else if (idsInt.length === 1) {
         try {
-            const data = await Promise.all(idsInt.map(id => readSomeOrder(id)));
+            const data = await readSomeOrder(idsInt[0]);
             return NextResponse.json(data, { status: 200 });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unexpected exception'
@@ -52,11 +52,17 @@ export async function PATCH(request) {
     console.log("PATCH /api/orders called");
     try {
         const { id, userId, date, total, products } = await request.json();
-        if (validOrder(userId, date, total, products)) {
+        console.log(id, userId, date, total, products)
+        if (id && validOrder(userId, total, date, products)) {
+            console.log("going to update")
             const data = await updateOrder(id, userId, date, total, products);
+            console.log("updated")
             return NextResponse.json(data, { status: 200 });
+        } else {
+            return NextResponse.json({ message: "Invalid order data" }, { status: 400 });
         }
     } catch (error) {
+        console.error("API Error:", error);
         const message = error instanceof Error ? error.message : "Unexpected error";
         return new Response(message, { status: 500 });
 
