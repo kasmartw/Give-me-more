@@ -3,6 +3,8 @@ import "./globals.css";
 import ProductProvider from "@/components/contextoGlobal";
 import UserProvider from "@/components/globalContextUsers";
 import OrderProvider from "@/components/globalContextOrders";
+import NotificationProvider from "@/components/globalContextNotification";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +30,7 @@ export default function RootLayout({ children }) {
         <ProductProvider>
           <UserProvider>
             <OrderProvider>
-              {children}
+              <NotificationProvider>{children}</NotificationProvider>
             </OrderProvider>
           </UserProvider>
         </ProductProvider>

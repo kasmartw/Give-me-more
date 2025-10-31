@@ -27,11 +27,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import Link from "next/link"
+import { useNotification } from "@/components/globalContextNotification"
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
-    const [notification, setNotification] = useState(null);
+    const { notification, setNotification } = useNotification();
     const table = useReactTable({
         data: dataCurated,
         columns,

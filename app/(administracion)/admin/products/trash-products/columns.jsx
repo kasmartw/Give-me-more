@@ -11,6 +11,7 @@ import { MoreHorizontal } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useProduct } from "@/components/contextoGlobal"
+import { useNotification } from "@/components/globalContextNotification"
 
 
 
@@ -101,6 +102,7 @@ export const columns = [
         id: "actions",
         cell: ({ row }) => {
             const { dataCurated, setDataCurated } = useProduct();
+            const { notification, setNotification } = useNotification()
             const product = row.original
 
             return (
@@ -133,7 +135,10 @@ export const columns = [
 
                                 if (!response.ok) {
                                     console.log(`Error restaurando producto ${product.id}`);
+                                    setNotification({ type: 'error', message: 'Error al restaurar producto' })
+
                                 }
+                                setNotification({ type: 'success', message: 'Producto restaurado correctamente' })
                                 setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 return await response.json();
                             } catch (error) {
@@ -148,11 +153,14 @@ export const columns = [
                                 });
 
                                 if (!response.ok) {
+                                    setNotification({ type: 'error', message: 'Error al eliminar producto' })
                                     console.log(`Error eliminando producto ${product.id}`);
                                 }
+                                setNotification({ type: 'success', message: 'Producto eliminado correctamente' })
                                 setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 return await response.json();
                             } catch (error) {
+                                setNotification({ type: 'error', message: 'Error al eliminar producto' })
                                 console.error("Error eliminando productos:", error);
                             }
                         }}

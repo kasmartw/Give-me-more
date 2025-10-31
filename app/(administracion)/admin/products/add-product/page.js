@@ -1,6 +1,16 @@
 "use client"
 import { useState } from "react";
 import { isValidProduct } from "@/lib/valid-product";
+import {
+    Field,
+    FieldDescription,
+    FieldGroup,
+    FieldLabel,
+    FieldLegend,
+    FieldSet,
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 export default function AddProductPage() {
     const [values, setValues] = useState({
@@ -120,98 +130,97 @@ export default function AddProductPage() {
     };
 
     return (
-        <div>
+        <div className="space-y-8">
             {notification && (
                 <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
                     {notification.message}
                     <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
                 </div>
             )}
-            <div className="flex flex-col">
-                <h1 className="text-2xl font-bold mb-4">Agregar producto</h1>
-            </div>
-            <div className="flex flex-col">
-                <label className="mb-1 font-medium">
-                    Nombre
-                </label>
-                <input
-                    value={values.name}
-                    onChange={(e) => setValues({ ...values, name: e.target.value })}
-                    type="text"
-                    id="name"
-                    className="border rounded p-2"
-                />
-            </div>
-            <div className="flex flex-col">
-                <label className="mb-1 font-medium">
-                    Descripción
-                </label>
-                <textarea
-                    value={values.desc}
-                    onChange={(e) => setValues({ ...values, desc: e.target.value })}
-                    id="desc"
-                    className="border rounded p-2"
-                />
-            </div>
-            <div className="flex flex-col">
-                <label className="mb-1 font-medium">
-                    Imagen (URL)
-                </label>
-                <input
-                    value={values.img}
-                    onChange={(e) => setValues({ ...values, img: e.target.value })}
-                    type="text"
-                    id="img"
-                    className="border rounded p-2"
-                />
-            </div>
-            <div className="flex flex-col">
-                <label className="mb-1 font-medium">
-                    Precio
-                </label>
-                <input
-                    value={values.price}
-                    onChange={(e) => setValues({ ...values, price: e.target.value })}
-                    id="price"
-                    className="border rounded p-2"
-                />
-            </div>
-            <div className="flex flex-col">
-                <label className="mb-1 font-medium">
-                    Inventario
-                </label>
-                <input
-                    value={values.stock}
-                    onChange={(e) => setValues({ ...values, stock: e.target.value })}
-                    id="stock"
-                    className="border rounded p-2"
-                />
-            </div>
-            <div>
-                <label className="mr-2 font-medium">Activo</label>
-                <input
-                    type="checkbox"
-                    checked={values.status}
-                    onChange={(e) => setValues({ ...values, status: e.target.checked })}
-                />
-            </div>
+            <header className="space-y-2">
+                <h1 className="text-2xl font-bold">Agregar producto</h1>
+                <p className="text-sm text-muted-foreground">Completa la información y elige si deseas publicarlo o guardarlo como borrador.</p>
+            </header>
 
-            <button
-                onClick={() => addNewProduct()}
-                disabled={isDisabledButton}
-                type="submit"
-                className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 mr-6"
-            >
-                Crear
-            </button>
-            <button
-                onClick={() => saveNewProduct()}
-                disabled={isDisabledButton}
-                type="submit"
-                className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
-            >
-                Guardar para despues
-            </button>
+            <FieldSet>
+                <FieldLegend>Información básica</FieldLegend>
+                <FieldDescription>Estos datos se mostrarán en la tienda.</FieldDescription>
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel htmlFor="name">Nombre</FieldLabel>
+                        <Input
+                            id="name"
+                            value={values.name}
+                            onChange={(e) => setValues({ ...values, name: e.target.value })}
+                            placeholder="Escribe el nombre del producto"
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="desc">Descripción</FieldLabel>
+                        <textarea
+                            id="desc"
+                            value={values.desc}
+                            onChange={(e) => setValues({ ...values, desc: e.target.value })}
+                            placeholder="Describe el producto brevemente"
+                            className="min-h-32 rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
+                    </Field>
+                </FieldGroup>
+            </FieldSet>
+
+            <FieldSet>
+                <FieldLegend>Detalles del producto</FieldLegend>
+                <FieldGroup className="gap-6">
+                    <Field>
+                        <FieldLabel htmlFor="img">Imagen (URL)</FieldLabel>
+                        <Input
+                            id="img"
+                            value={values.img}
+                            onChange={(e) => setValues({ ...values, img: e.target.value })}
+                            placeholder="https://..."
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="price">Precio</FieldLabel>
+                        <Input
+                            id="price"
+                            value={values.price}
+                            onChange={(e) => setValues({ ...values, price: e.target.value })}
+                            placeholder="0.00"
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="stock">Inventario</FieldLabel>
+                        <Input
+                            id="stock"
+                            value={values.stock}
+                            onChange={(e) => setValues({ ...values, stock: e.target.value })}
+                            placeholder="0"
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="status">Activo</FieldLabel>
+                        <div className="flex items-center gap-2">
+                            <input
+                                id="status"
+                                type="checkbox"
+                                checked={values.status}
+                                onChange={(e) => setValues({ ...values, status: e.target.checked })}
+                            />
+                            <span className="text-sm text-muted-foreground">Muestra el producto en la tienda</span>
+                        </div>
+                    </Field>
+                </FieldGroup>
+            </FieldSet>
+
+            <div className="flex flex-wrap gap-3">
+                <Button onClick={() => addNewProduct()} disabled={isDisabledButton}>
+                    {isDisabledButton ? "Guardando..." : "Publicar"}
+                </Button>
+                <Button onClick={() => saveNewProduct()} type="button" variant="outline" disabled={isDisabledButton}>
+                    Guardar como borrador
+                </Button>
+            </div>
         </div>
     );
 }

@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
+import { useNotification } from "@/components/globalContextNotification"
+
 
 export const columns = [
     {
@@ -61,6 +63,7 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
+            const { notification, setNotification } = useNotification()
             const user = row.original
             async function handleDeleteUser(userId) {
                 //hacer un alert dialog para confirmar la eliminacion
@@ -73,11 +76,12 @@ export const columns = [
                         body: JSON.stringify({ id: userId }),
                     })
                     if (response.ok) {
-                        alert('Usuario eliminado')
+                        setNotification({ type: 'success', message: 'Usuario eliminado correctamente' })
                     } else {
-                        alert('Error en la peticion')
+                        setNotification({ type: 'error', message: 'Error al eliminar el usuario' })
                     }
                 } catch (error) {
+                    setNotification({ type: 'error', message: 'Error al eliminar el usuario' })
                     console.error(error)
                 }
             }

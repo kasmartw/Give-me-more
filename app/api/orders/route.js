@@ -34,9 +34,9 @@ export async function GET(request) {
 export async function POST(request) {
     console.log("POST /api/orders called");
     try {
-        const { userId, total, date, products } = await request.json();
+        const { id, userId, total, date, products } = await request.json();
         if (validOrder(userId, total, date, products)) {
-            const data = await createOrder(userId, total, date, products);
+            const data = await createOrder(id, userId, total, date, products);
             return NextResponse.json(data, { status: 201 });
         } else {
             return NextResponse.json({ message: "Invalid order data" }, { status: 400 });

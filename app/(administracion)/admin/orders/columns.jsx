@@ -11,6 +11,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { useOrder } from "@/components/globalContextOrders"
+import { useNotification } from "@/components/globalContextNotification"
 
 export const columns = [
     {
@@ -68,6 +69,7 @@ export const columns = [
         id: "actions",
         cell: ({ row }) => {
             const { dataCurated, setDataCurated } = useOrder()
+            const { notification, setNotification } = useNotification()
             const order = row.original
             async function handleDeleteOrder() {
                 try {
@@ -82,11 +84,14 @@ export const columns = [
 
                     const data = await resp.json();
                     if (!resp.ok) {
-                        throw new Error(data.message || 'Error al eliminar pedido');
-                    }
+                        setNotification({ type: 'error', message: 'Error al eliminar pedido' })
+                        throw new Error(data.message);
 
+                    }
+                    setNotification({ type: 'success', message: 'Pedido eliminado correctamente' })
                     setDataCurated(dataCurated.filter((row) => row.id !== id));
                 } catch (error) {
+                    setNotification({ type: 'error', message: 'Error al eliminar pedido' })
                     console.error(error);
                 }
             }

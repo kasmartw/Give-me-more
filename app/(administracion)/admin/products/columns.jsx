@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
 import { useProduct } from "@/components/contextoGlobal"
+import { useNotification } from "@/components/globalContextNotification"
 
 
 export const columns = [
@@ -95,20 +96,16 @@ export const columns = [
         header: () => <div className="text-center">Estado</div>,
         cell: ({ row }) => {
             const { dataCurated, setDataCurated } = useProduct();
+            const { notification, setNotification } = useNotification()
             const product = row.original
-
-
             const productFromState = dataCurated.find(p => p.id === product.id);
-
 
             if (!productFromState) {
                 return null;
             }
 
             const currentStatus = productFromState.status;
-
             const handleStatusChange = async () => {
-
                 setDataCurated(
                     dataCurated.map((p) => {
                         if (product.id === p.id) {
@@ -119,25 +116,22 @@ export const columns = [
                     })
                 );
 
-
                 try {
                     const response = await fetch(`/api/products?id=${product.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: "status", status: !currentStatus }),
                     });
-
                     if (!response.ok) {
-
+                        setNotification({ type: "error", message: "Error al cambiar el estado del producto" })
                         setDataCurated(dataCurated);
                     }
                 } catch (error) {
-
+                    setNotification({ type: "error", message: "Error al cambiar el estado del producto" })
                     console.error("Error de red:", error);
                     setDataCurated(dataCurated);
                 }
             }
-
             return (
                 <div className="flex items-center justify-center gap-2">
                     <Switch
@@ -155,6 +149,7 @@ export const columns = [
         id: "actions",
         cell: ({ row }) => {
             const { dataCurated, setDataCurated } = useProduct();
+            const { notification, setNotification } = useNotification();
             const product = row.original
             return (
                 <DropdownMenu>
@@ -191,9 +186,12 @@ export const columns = [
                                 });
 
                                 if (!response.ok) {
+                                    setNotification({ type: 'error', message: 'Error al mover producto' })
                                     console.log(`Error moviendo producto ${product.id}`);
+                                } else {
+                                  setNotification({ type: 'success', message: 'Producto movido correctamente' })
+                                  setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 }
-                                setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 return await response.json();
                             } catch (error) {
                                 console.log(error)

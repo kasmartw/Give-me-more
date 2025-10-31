@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
 import { useProduct } from "@/components/contextoGlobal"
+import { useNotification } from "@/components/globalContextNotification"
 
 
 export const columns = [
@@ -73,6 +74,7 @@ export const columns = [
         id: "actions",
         cell: ({ row }) => {
             const { dataCurated, setDataCurated } = useProduct();
+            const { notification, setNotification } = useNotification();
             const product = row.original
             return (
                 <DropdownMenu>
@@ -94,11 +96,14 @@ export const columns = [
                                 });
 
                                 if (!response.ok) {
+                                    setNotification({ type: "error", message: "Error al eliminar el producto" })
                                     console.log(`Error eliminando producto ${product.id}`);
                                 }
+                                setNotification({ type: "success", message: "Producto eliminado con éxito" })
                                 setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 return await response.json();
                             } catch (error) {
+                                setNotification({ type: "error", message: "Error al eliminar el producto" })
                                 console.error("Error eliminando productos:", error);
                             }
                         }}
