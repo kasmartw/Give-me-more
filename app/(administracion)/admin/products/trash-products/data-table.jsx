@@ -22,6 +22,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -31,6 +41,7 @@ import { useNotification } from "@/components/globalContextNotification"
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([]);
     const [rowSelection, setRowSelection] = useState({});
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const { notification, setNotification } = useNotification();
     const table = useReactTable({
         data: dataCurated,
@@ -153,11 +164,35 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                         <DropdownMenuItem disabled={!selectedProduct.length} onClick={() => { handleRestore() }}>Restaurar</DropdownMenuItem>
-                        <DropdownMenuItem disabled={!selectedProduct.length} onClick={() => { handleDelete() }}>Eliminar permanentemente</DropdownMenuItem>
+                        <DropdownMenuItem
+                            disabled={!selectedProduct.length}
+                            onSelect={(event) => {
+                                event.preventDefault();
+                                if (selectedProduct.length) {
+                                    setIsDeleteDialogOpen(true);
+                                }
+                            }}
+                        >
+                            Eliminar permanentemente
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
             </div>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Estas seguro de eliminar?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta accion no podra ser deshecha.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Eliminar</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="overflow-hidden rounded-md border">
                 <Table>
                     <TableHeader>

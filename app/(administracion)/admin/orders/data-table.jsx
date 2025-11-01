@@ -23,6 +23,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useNotification } from "@/components/globalContextNotification"
@@ -33,6 +43,7 @@ import { useNotification } from "@/components/globalContextNotification"
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const { notification, setNotification } = useNotification();
     const table = useReactTable({
         data: dataCurated,
@@ -78,6 +89,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                 prev.filter((row) => !deletedIds.includes(Number(row.id)))
             );
             table.resetRowSelection();
+            setIsDeleteDialogOpen(false);
         } catch (error) {
             console.error(error);
             setNotification({ type: 'error', message: error.message || 'Error al eliminar pedidos.' });
@@ -101,10 +113,34 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         <Button variant="outline">Acciones</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleDeleteOrders()}>Eliminar Pedido</DropdownMenuItem>
+                        <DropdownMenuItem
+                            disabled={!selectedIds.length}
+                            onSelect={(event) => {
+                                event.preventDefault();
+                                if (selectedIds.length) {
+                                    setIsDeleteDialogOpen(true);
+                                }
+                            }}
+                        >
+                            Eliminar Pedido
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar pedidos seleccionados</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción eliminará permanentemente los pedidos seleccionados.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteOrders}>Eliminar</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="overflow-hidden rounded-md border">
                 <Table>
                     <TableHeader>

@@ -8,10 +8,21 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { useOrder } from "@/components/globalContextOrders"
 import { useNotification } from "@/components/globalContextNotification"
+import { useState } from "react"
 
 export const columns = [
     {
@@ -71,6 +82,7 @@ export const columns = [
             const { dataCurated, setDataCurated } = useOrder()
             const { notification, setNotification } = useNotification()
             const order = row.original
+            const [isDialogOpen, setIsDialogOpen] = useState(false);
             async function handleDeleteOrder() {
                 try {
                     const id = Number(order.id);
@@ -86,10 +98,10 @@ export const columns = [
                     if (!resp.ok) {
                         setNotification({ type: 'error', message: 'Error al eliminar pedido' })
                         throw new Error(data.message);
-
                     }
                     setNotification({ type: 'success', message: 'Pedido eliminado correctamente' })
                     setDataCurated(dataCurated.filter((row) => row.id !== id));
+                    setIsDialogOpen(false);
                 } catch (error) {
                     setNotification({ type: 'error', message: 'Error al eliminar pedido' })
                     console.error(error);
@@ -97,23 +109,46 @@ export const columns = [
             }
 
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleDeleteOrder()}>Eliminar compra</DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Link href={`/admin/orders/update-order/${order.id}`}>Actualizar compra</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Link href={`/admin/orders/order-details/${order.id}`}>Ver detalle de la compra</Link>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onSelect={(event) => {
+                                    event.preventDefault();
+                                    setIsDialogOpen(true);
+                                }}
+                            >
+                                Eliminar compra
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Link href={`/admin/orders/update-order/${order.id}`}>Actualizar compra</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Link href={`/admin/orders/order-details/${order.id}`}>Ver detalle de la compra</Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Eliminar pedido</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente el pedido seleccionado.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteOrder}>Eliminar</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </>
             )
         },
     },

@@ -23,15 +23,28 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useNotification } from "@/components/globalContextNotification"
+import { useRouter } from "next/navigation"
 
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const { notification, setNotification } = useNotification();
+    const router = useRouter();
     const table = useReactTable({
         data: dataCurated,
         columns,
@@ -54,7 +67,6 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
             setNotification({ type: 'error', message: 'No puedes eliminar todos los usuarios.' });
             return;
         }
-        console.log(selectedIds)
         try {
             const promise = selectedIds.map(async (id) => {
                 const resp = await fetch('/api/users', {
@@ -64,10 +76,11 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                     },
                     body: JSON.stringify({ id }),
                 });
+                const data = await resp.json();
                 if (!resp.ok) {
-                    throw new Error('Error al eliminar usuario');
+                    throw new Error(data?.message || 'Error al eliminar usuario');
                 }
-                return await resp.json();
+                return data;
 
             });
 
@@ -75,7 +88,12 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
 
             if (allResp.every(res => res.message === "User deleted")) {
                 setNotification({ type: 'success', message: 'Usuarios eliminados correctamente.' });
-                setDataCurated(dataCurated.filter((e) => !selectedIds.includes(e.id)));
+                setDataCurated((prev) => prev.filter((e) => !selectedIds.includes(e.id)));
+                setIsDeleteDialogOpen(false);
+                const shouldRedirect = allResp.some(res => res.currentUserDeleted);
+                if (shouldRedirect) {
+                    router.push('/login');
+                }
             } else {
                 setNotification({ type: 'error', message: 'Error al eliminar usuarios.' });
             }
@@ -103,10 +121,34 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                         <Button variant="outline">Acciones</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleDeleteUser()}>Eliminar usuario</DropdownMenuItem>
+                        <DropdownMenuItem
+                            disabled={!selectedIds.length}
+                            onSelect={(event) => {
+                                event.preventDefault();
+                                if (selectedIds.length) {
+                                    setIsDeleteDialogOpen(true);
+                                }
+                            }}
+                        >
+                            Eliminar usuario
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar usuarios seleccionados</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción eliminará permanentemente los administradores seleccionados.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteUser}>Eliminar</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="overflow-hidden rounded-md border">
                 <Table>
                     <TableHeader>

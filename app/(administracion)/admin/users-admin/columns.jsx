@@ -8,9 +8,22 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { useNotification } from "@/components/globalContextNotification"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useUser } from "@/components/globalContextUsers"
 
 
 export const columns = [
@@ -63,10 +76,12 @@ export const columns = [
     {
         id: "actions",
         cell: ({ row }) => {
-            const { notification, setNotification } = useNotification()
+            const { setNotification } = useNotification()
             const user = row.original
+            const router = useRouter()
+            const { setDataCurated } = useUser();
+            const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
             async function handleDeleteUser(userId) {
-                //hacer un alert dialog para confirmar la eliminacion
                 try {
                     const response = await fetch(`/api/users`, {
                         method: 'DELETE',
@@ -75,10 +90,18 @@ export const columns = [
                         },
                         body: JSON.stringify({ id: userId }),
                     })
+                    const result = await response.json();
                     if (response.ok) {
                         setNotification({ type: 'success', message: 'Usuario eliminado correctamente' })
+                        setDataCurated((prev) => prev.filter((item) => item.id !== userId));
+                        setIsDeleteDialogOpen(false);
+                        if (result?.currentUserDeleted) {
+                            router.push('/login');
+                        }
+
+
                     } else {
-                        setNotification({ type: 'error', message: 'Error al eliminar el usuario' })
+                        setNotification({ type: 'error', message: result?.message || 'Error al eliminar el usuario' })
                     }
                 } catch (error) {
                     setNotification({ type: 'error', message: 'Error al eliminar el usuario' })
@@ -87,22 +110,45 @@ export const columns = [
             }
 
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleDeleteUser(user.id)}>Eliminar usuario</DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Link href={`/admin/users-admin/edit-user/${user.id}`}>Cambiar contraseña</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onSelect={(event) => {
+                                    event.preventDefault();
+                                    setIsDeleteDialogOpen(true);
+                                }}
+                            >
+                                Eliminar usuario
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Link href={`/admin/users-admin/edit-user/${user.id}`}>Cambiar contraseña</Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Eliminar usuario</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente este administrador.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                    Eliminar
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </>
             )
         },
     },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { validUser } from "@/lib/valid-user";
 import { createUser, getUserByName, readAdminUsers, deleteUser, readSomeUser, changePassword } from "@/lib/manage-db";
-import { SignJWT } from 'jose'
+import { SignJWT, jwtVerify } from 'jose'
 import rateLimiterMiddleware from "@/lib/ratelimiter";
 
 
@@ -110,15 +110,58 @@ export async function PATCH(request) {
 export async function DELETE(request) {
     try {
         const { id } = await request.json();
-        const idInt = parseInt(id)
+        const idInt = parseInt(id, 10)
         console.log(id);
-        if (typeof idInt === 'number') {
+        if (!Number.isInteger(idInt)) {
+            return NextResponse.json({ message: 'Invalid user id' }, { status: 400 });
+        }
+
+        let currentUserId = null;
+        const token = request.cookies.get('session')?.value;
+        if (token) {
+            try {
+                const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+                const { payload } = await jwtVerify(token, secret);
+                if (payload) {
+                    if (typeof payload.userId === 'number') {
+                        currentUserId = payload.userId;
+                    } else if (typeof payload.userId === 'string') {
+                        const parsedUserId = parseInt(payload.userId, 10);
+                        if (Number.isInteger(parsedUserId)) {
+                            currentUserId = parsedUserId;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn("Failed to verify session token during user deletion:", error);
+            }
+        }
+
+        try {
             console.log(`Deleting user with id: ${idInt}`);
             await deleteUser(idInt);
-            return NextResponse.json({ message: "User deleted" }, { status: 200 });
-        } else {
-            return new Response({ status: 400 });
+        } catch (error) {
+            console.error("Error while deleting user:", error);
+            const message = error instanceof Error ? error.message : 'Unexpected exception';
+            return NextResponse.json({ message }, { status: 500 });
         }
+
+        const response = NextResponse.json(
+            { message: "User deleted", currentUserDeleted: currentUserId === idInt },
+            { status: 200 }
+        );
+
+        if (currentUserId === idInt) {
+            response.cookies.set('session', '', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/',
+                maxAge: 0,
+            });
+        }
+
+        return response;
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unexpected exception'
 
