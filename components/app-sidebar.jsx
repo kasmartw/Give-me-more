@@ -65,12 +65,11 @@ const NAVIGATION = [
   },
   {
     title: "Analitica",
-    url: "#",
     icon: ChartSpline,
     items: [
       {
         title: "General",
-        url: "#",
+        url: "/admin/analytics",
       },
       {
         title: "Team",
@@ -107,9 +106,9 @@ export function AppSidebar({
 }) {
   const sidebarUser = currentUser
     ? {
-        name: currentUser.username ?? currentUser.name ?? FALLBACK_USER.name,
-        email: currentUser.email || FALLBACK_USER.email,
-      }
+      name: currentUser.username ?? currentUser.name ?? FALLBACK_USER.name,
+      email: currentUser.email || FALLBACK_USER.email,
+    }
     : FALLBACK_USER;
 
   return (

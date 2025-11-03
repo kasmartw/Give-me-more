@@ -25,14 +25,25 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useNotification } from "@/components/globalContextNotification"
+import { MoreVertical } from "lucide-react"
 
 export function DataTable({ columns, data, dataCurated, setDataCurated }) {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
+    const [isTabletOrLarger, setIsTabletOrLarger] = useState(undefined)
     const { notification, setNotification } = useNotification();
+    useEffect(() => {
+        const updateMatch = () => {
+            setIsTabletOrLarger(window.innerWidth >= 768)
+        }
+
+        updateMatch()
+        window.addEventListener("resize", updateMatch)
+        return () => window.removeEventListener("resize", updateMatch)
+    }, [])
     const table = useReactTable({
         data: dataCurated,
         columns,
@@ -129,7 +140,11 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
         }
     }
 
-    return (
+    if (isTabletOrLarger === undefined) {
+        return null
+    }
+
+    return isTabletOrLarger ? (
         <div>
             {notification && (
                 <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
@@ -222,5 +237,151 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                 </Button>
             </div>
         </div >
+    ) : (
+        <div>
+            {notification && (
+                <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {notification.message}
+                    <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
+                </div>
+            )}
+
+            <div className="flex flex-col gap-3 mb-4">
+                <div className="text-muted-foreground text-sm">
+                    {table.getFilteredSelectedRowModel().rows.length} de{" "}
+                    {table.getFilteredRowModel().rows.length} seleccionados
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full">Acciones</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full">
+                        <DropdownMenuItem disabled={!selectedIds.length}>
+                            <Link href={`/admin/products/edit-product/${selectedIds.join('/')}`}>
+                                Editar precio e inventario
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleMoveToTrash()}>Mover a la papelera</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(true)}>Activar productos</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!selectedIds.length} onClick={() => handleStatus(false)}>Desactivar productos</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="space-y-3">
+                {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                        <div
+                            key={row.id}
+                            className={`bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow ${row.getIsSelected() ? 'ring-2 ring-blue-500' : ''
+                                }`}
+                        >
+                            <ProductCardRow
+                                row={row}
+                            />
+                        </div>
+                    ))
+                ) : (
+                    <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+                        No hay resultados.
+                    </div>
+                )}
+            </div>
+
+            <div className="flex items-center justify-between space-x-2 py-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className="flex-1"
+                >
+                    Anterior
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className="flex-1"
+                >
+                    Siguiente
+                </Button>
+            </div>
+        </div>
+    )
+}
+
+function ProductCardRow({ row }) {
+    const cells = row.getVisibleCells()
+    const checkboxCell = cells.find((cell) => cell.column.id === "select")
+    const nameCell = cells.find((cell) => cell.column.id === "name")
+    const imgCell = cells.find((cell) => cell.column.id === "img")
+    const priceCell = cells.find((cell) => cell.column.id === "price")
+    const stockCell = cells.find((cell) => cell.column.id === "stock")
+    const statusCell = cells.find((cell) => cell.column.id === "status")
+    const actionsCell = cells.find((cell) => cell.column.id === "actions")
+
+    return (
+        <div className="flex w-full items-center gap-3">
+            <div className="flex-shrink-0">
+                {checkboxCell &&
+                    flexRender(
+                        checkboxCell.column.columnDef.cell,
+                        checkboxCell.getContext()
+                    )}
+            </div>
+
+            <div className="flex flex-1 items-center gap-3">
+                <div className="min-w-0 flex-1">
+                    {nameCell && (
+                        <div className="text-sm font-medium text-gray-900">
+                            {flexRender(nameCell.column.columnDef.cell, nameCell.getContext())}
+                        </div>
+                    )}
+                    {stockCell && (
+                        <div className="text-xs text-gray-500 flex gap-1">
+                            <span>Inventario:</span>
+                            <span className="text-gray-900">
+                                {flexRender(stockCell.column.columnDef.cell, stockCell.getContext())}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex-shrink-0 flex items-center justify-center mx-auto">
+                    {imgCell &&
+                        flexRender(
+                            imgCell.column.columnDef.cell,
+                            imgCell.getContext()
+                        )}
+                </div>
+
+                <div className="flex flex-col items-end gap-1">
+                    {priceCell && (
+                        <div className="text-sm font-semibold text-gray-900">
+                            {flexRender(priceCell.column.columnDef.cell, priceCell.getContext())}
+                        </div>
+                    )}
+                    {statusCell && (
+                        <div>
+                            {flexRender(
+                                statusCell.column.columnDef.cell,
+                                statusCell.getContext()
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {actionsCell && (
+                <div className="flex-shrink-0">
+                    {flexRender(
+                        actionsCell.column.columnDef.cell,
+                        actionsCell.getContext()
+                    )}
+                </div>
+            )}
+        </div>
     )
 }

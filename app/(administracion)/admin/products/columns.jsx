@@ -7,7 +7,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
+import { MoreVertical } from "lucide-react"
 import { ArrowUpDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
@@ -138,7 +138,7 @@ export const columns = [
                         checked={currentStatus}
                         onCheckedChange={handleStatusChange}
                     />
-                    <span className="capitalize w-14 text-left">
+                    <span className="capitalize w-14 text-left hidden md:block">
                         {currentStatus ? "Activo" : "Inactivo"}
                     </span>
                 </div>
@@ -156,13 +156,13 @@ export const columns = [
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreVertical className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem>
-                            <Link href={`/admin/products/product-overview${product.id}`}>Ver producto</Link>
+                            <Link href={`/admin/products/product-overview/${product.id}`}>Ver producto</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                             <Link href={`/admin/products/edit-product/${product.id}`}>Editar producto</Link>
@@ -189,8 +189,8 @@ export const columns = [
                                     setNotification({ type: 'error', message: 'Error al mover producto' })
                                     console.log(`Error moviendo producto ${product.id}`);
                                 } else {
-                                  setNotification({ type: 'success', message: 'Producto movido correctamente' })
-                                  setDataCurated(dataCurated.filter((e) => e.id !== product.id))
+                                    setNotification({ type: 'success', message: 'Producto movido correctamente' })
+                                    setDataCurated(dataCurated.filter((e) => e.id !== product.id))
                                 }
                                 return await response.json();
                             } catch (error) {

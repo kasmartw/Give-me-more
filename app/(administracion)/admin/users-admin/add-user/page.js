@@ -16,7 +16,7 @@ import { Alert, AlertTitle } from "@/components/ui/alert"
 
 
 function FormSignup() {
-    const [value, setValue] = useState({ name: "", pass: "", confirmPass: "", email: "" });
+    const [value, setValue] = useState({ name: "", pass: "", confirmPass: "", email: "", confirmEmail: "" });
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
@@ -30,6 +30,10 @@ function FormSignup() {
         e.preventDefault();
         if (value.pass !== value.confirmPass) {
             setError("Las contraseñas no coinciden")
+            return;
+        }
+        if (value.email !== value.confirmEmail) {
+            setError("Los correos electrónicos no coinciden")
             return;
         }
         setError("")
@@ -48,7 +52,7 @@ function FormSignup() {
         } catch (err) {
             setError(err.message)
         }
-        setValue({ name: "", pass: "", confirmPass: "", email: "" })
+        setValue({ name: "", pass: "", confirmPass: "", email: "", confirmEmail: "" })
     }
 
     return (
@@ -89,13 +93,25 @@ function FormSignup() {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="username">Email</Label>
+                                    <Label htmlFor="email">Email</Label>
                                     <Input
                                         className="w-3/4"
                                         id="email"
                                         type="email"
                                         name="email"
                                         value={value.email}
+                                        onChange={(e) => handleChange(e)}
+                                        required
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="confirmEmail">Confirmar email</Label>
+                                    <Input
+                                        className="w-3/4"
+                                        id="confirmEmail"
+                                        type="email"
+                                        name="confirmEmail"
+                                        value={value.confirmEmail}
                                         onChange={(e) => handleChange(e)}
                                         required
                                     />

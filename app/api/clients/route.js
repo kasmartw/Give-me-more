@@ -1,6 +1,43 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+export async function GET(request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const idParam = searchParams.get("id");
+        const userId = Number(idParam);
+
+        if (!idParam || Number.isNaN(userId)) {
+            return NextResponse.json({ message: "ID de cliente inválido" }, { status: 400 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                number: true,
+            },
+        });
+
+        if (!user) {
+            return NextResponse.json({ message: "Cliente no encontrado" }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            id: user.id,
+            name: user.name,
+            phone: user.number,
+            email: user.email,
+        });
+    } catch (error) {
+        console.error("GET /api/clients error", error);
+        const message = error instanceof Error ? error.message : "Unexpected error";
+        return NextResponse.json({ message }, { status: 500 });
+    }
+}
+
 export async function POST(request) {
     try {
         const { fullName, phone, email } = await request.json();
