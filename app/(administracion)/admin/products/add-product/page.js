@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function AddProductPage() {
     const [values, setValues] = useState({
@@ -215,7 +216,7 @@ export default function AddProductPage() {
 
             <div className="flex flex-wrap gap-3">
                 <Button onClick={() => addNewProduct()} disabled={isDisabledButton}>
-                    {isDisabledButton ? "Guardando..." : "Publicar"}
+                    {isDisabledButton ? <Spinner /> : "Publicar"}
                 </Button>
                 <Button onClick={() => saveNewProduct()} type="button" variant="outline" disabled={isDisabledButton}>
                     Guardar como borrador

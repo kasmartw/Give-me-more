@@ -13,12 +13,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertTitle } from "@/components/ui/alert"
+import { Spinner } from "@/components/ui/spinner"
 
 
 function FormSignup() {
     const [value, setValue] = useState({ name: "", pass: "", confirmPass: "", email: "", confirmEmail: "" });
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
+    const [isDisabledButton, setIsDisabledButton] = useState(false)
 
 
 
@@ -27,6 +29,7 @@ function FormSignup() {
     }
 
     async function handleSubmit(e) {
+        setIsDisabledButton(true);
         e.preventDefault();
         if (value.pass !== value.confirmPass) {
             setError("Las contraseñas no coinciden")
@@ -52,6 +55,7 @@ function FormSignup() {
         } catch (err) {
             setError(err.message)
         }
+        setIsDisabledButton(false);
         setValue({ name: "", pass: "", confirmPass: "", email: "", confirmEmail: "" })
     }
 
@@ -148,8 +152,8 @@ function FormSignup() {
                         </form>
                     </CardContent>
                     <CardFooter className="flex-col gap-2">
-                        <Button type="submit" form="signupForm" className="w-full">
-                            Registrarse
+                        <Button type="submit" form="signupForm" className="w-full" disabled={isDisabledButton}>
+                            {isDisabledButton ? <Spinner /> : "Crear cuenta"}
                         </Button>
                     </CardFooter>
                 </Card>

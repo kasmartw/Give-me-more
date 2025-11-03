@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Trash2 } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function AddOrderPage() {
   const [isDisabled, setIsDisabled] = useState(false)
@@ -412,7 +413,7 @@ export default function AddOrderPage() {
 
         <Field orientation="horizontal">
           <Button type="submit" disabled={isDisabled}>
-            {isDisabled ? "Guardando..." : "Crear pedido"}
+            {isDisabled ? <Spinner size="sm" /> : "Crear pedido"}
           </Button>
           <Button
             variant="outline"

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 
 
 export default function EditOrder() {
@@ -329,7 +330,7 @@ export default function EditOrder() {
                     onClick={() => editedOrder()}
                     type="button"
                 >
-                    {isDisabled ? "Guardando..." : "Guardar"}
+                    {isDisabled ? <Spinner size="sm" /> : "Guardar"}
                 </Button>
                 <Button variant="outline" type="button" asChild>
                     <Link href="/admin/orders">Cancelar</Link>

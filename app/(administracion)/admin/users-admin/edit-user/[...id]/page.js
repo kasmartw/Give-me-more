@@ -1,102 +1,213 @@
 "use client"
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import {
+    Field,
+    FieldDescription,
+    FieldGroup,
+    FieldLabel,
+    FieldLegend,
+    FieldSet,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 
-export default function EditUser() {
+export default function EditUserPage() {
     const params = useParams();
-    const [res, setRes] = useState({})
+    const [user, setUser] = useState(null);
+    const [pass, setPass] = useState({ newPass: "", confirmPass: "" });
     const [notification, setNotification] = useState(null);
-    const [pass, setPass] = useState({
-        newPass: "",
-        confirmPass: ""
-    })
-    const { id } = params;
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const userId = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
     useEffect(() => {
-        async function fetchData() {
+        async function fetchUser() {
             try {
-                const res = await fetch(`/api/users/?id=${id}`, {
+                const response = await fetch(`/api/users/?id=${userId}`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
-                })
-                if (!res.ok) {
-                    console.log("error en la peticion")
+                });
 
-                } else {
-                    const user = await res.json()
-                    console.log(user)
-                    setRes(user[0])
+                if (!response.ok) {
+                    throw new Error("No se pudo obtener la información del usuario.");
                 }
 
-                setPass({
-                    newPass: "",
-                    confirmPass: ""
-                })
-            } catch (err) {
-                console.error(err)
+                const data = await response.json();
+                setUser(data?.[0] ?? null);
+            } catch (error) {
+                console.error(error);
+                setNotification({
+                    type: "error",
+                    message: "No se pudo cargar la información del usuario.",
+                });
+            } finally {
+                setIsLoading(false);
             }
         }
 
-        fetchData()
-    }, [])
+        fetchUser();
+    }, [userId]);
+
     async function handleNewPass() {
-        console.log(pass.newPass, pass.confirmPass, res.username)
-        if (pass.newPass !== pass.confirmPass || pass.newPass.trim() === "" || pass.confirmPass.trim() === "") {
-            alert("Las contraseñas no coinciden o están vacías")
-            return
+        if (!user) {
+            return;
         }
+
+        if (!pass.newPass.trim() || !pass.confirmPass.trim()) {
+            setNotification({
+                type: "error",
+                message: "Las contraseñas no pueden estar vacías.",
+            });
+            return;
+        }
+
+        if (pass.newPass !== pass.confirmPass) {
+            setNotification({
+                type: "error",
+                message: "Las contraseñas no coinciden.",
+            });
+            return;
+        }
+
         try {
+            setIsSubmitting(true);
             const response = await fetch(`/api/users`, {
-                method: 'PATCH',
+                method: "PATCH",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ id: res.id, password: pass.newPass, username: res.username }),
-            })
-            if (response.ok) {
-                setNotification({ message: 'Contraseña actualizada correctamente', type: 'success' })
-                setPass({
-                    newPass: "",
-                    confirmPass: ""
-                })
-            } else {
-                setNotification({ message: 'Error al actualizar la contraseña', type: 'error' })
+                body: JSON.stringify({
+                    id: user.id,
+                    password: pass.newPass,
+                    username: user.username,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al actualizar la contraseña.");
             }
+
+            setNotification({
+                type: "success",
+                message: "Contraseña actualizada correctamente.",
+            });
+            setPass({ newPass: "", confirmPass: "" });
         } catch (error) {
-            console.error(error)
-            setNotification({ message: 'Error al actualizar la contraseña', type: 'error' })
+            console.error(error);
+            setNotification({
+                type: "error",
+                message: "Error al actualizar la contraseña.",
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     }
-    return (
-        <div>
-            <div className="flex flex-col">
-                {notification && (
-                    <div className={`p-4 mb-4 text-white rounded ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
-                        {notification.message}
-                        <button onClick={() => setNotification(null)} className="ml-4 font-bold float-right">&times;</button>
-                    </div>
-                )}
-                <h1 className="text-2xl font-bold mb-4">Usuario a editar: {res.username}</h1>
-            </div>
-            <div className="flex flex-col">
-                <label className="mb-1 font-medium">
-                    Nueva contraseña:
-                </label>
-                <input type="text" className="border border-gray-300 rounded-md p-2 mb-4"
-                    value={pass.newPass}
-                    onChange={(e) => setPass({ ...pass, newPass: e.target.value })} />
-                <label>
-                    Confirmar contraseña:
-                </label>
-                <input type="text" className="border border-gray-300 rounded-md p-2 mb-4"
-                    value={pass.confirmPass}
-                    onChange={(e) => setPass({ ...pass, confirmPass: e.target.value })} />
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-                    onClick={() => handleNewPass()}>
-                    Cambiar contraseña
-                </button>
-            </div>
-        </div>
-    )
 
+    const isSubmitDisabled =
+        !user ||
+        !pass.newPass.trim() ||
+        !pass.confirmPass.trim() ||
+        isSubmitting;
+
+    return (
+        <div className="space-y-6">
+            {notification && (
+                <Alert
+                    variant={
+                        notification.type === "success" ? "default" : "destructive"
+                    }
+                >
+                    <AlertDescription>{notification.message}</AlertDescription>
+                </Alert>
+            )}
+
+            <FieldSet>
+                <FieldLegend>Información del administrador</FieldLegend>
+                <FieldDescription>
+                    Consulta los datos actuales antes de actualizar la contraseña.
+                </FieldDescription>
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel>Usuario</FieldLabel>
+                        <Input
+                            value={user?.username ?? ""}
+                            disabled
+                            placeholder={isLoading ? "Cargando..." : "Nombre de usuario"}
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel>Correo electrónico</FieldLabel>
+                        <Input
+                            value={user?.email ?? ""}
+                            disabled
+                            placeholder={isLoading ? "Cargando..." : "Correo electrónico"}
+                        />
+                    </Field>
+                </FieldGroup>
+            </FieldSet>
+
+            <FieldSet>
+                <FieldLegend>Nueva contraseña</FieldLegend>
+                <FieldDescription>
+                    Ingresa y confirma la contraseña temporal que compartirás con el
+                    administrador.
+                </FieldDescription>
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel htmlFor="newPassword">Nueva contraseña</FieldLabel>
+                        <Input
+                            id="newPassword"
+                            type="password"
+                            value={pass.newPass}
+                            onChange={(event) =>
+                                setPass((prev) => ({
+                                    ...prev,
+                                    newPass: event.target.value,
+                                }))
+                            }
+                            autoComplete="new-password"
+                            placeholder="Ingresa la nueva contraseña"
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="confirmPassword">
+                            Confirmar contraseña
+                        </FieldLabel>
+                        <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={pass.confirmPass}
+                            onChange={(event) =>
+                                setPass((prev) => ({
+                                    ...prev,
+                                    confirmPass: event.target.value,
+                                }))
+                            }
+                            autoComplete="new-password"
+                            placeholder="Confirma la nueva contraseña"
+                        />
+                    </Field>
+                </FieldGroup>
+                <FieldDescription>
+                    Ambas contraseñas deben coincidir para habilitar la actualización.
+                </FieldDescription>
+                <div>
+                    <Button onClick={handleNewPass} disabled={isSubmitDisabled}>
+                        {isSubmitting ? (
+                            <>
+                                <Spinner className="mr-2" />
+                                Guardando...
+                            </>
+                        ) : (
+                            "Cambiar contraseña"
+                        )}
+                    </Button>
+                </div>
+            </FieldSet>
+        </div>
+    );
 }

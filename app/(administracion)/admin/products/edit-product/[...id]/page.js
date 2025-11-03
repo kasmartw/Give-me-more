@@ -19,6 +19,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function EditProduct() {
     const [isDisabledButton, setIsDisabledButton] = useState(false)
@@ -482,7 +483,7 @@ export default function EditProduct() {
                     onClick={() => editedProduct()}
                     disabled={isDisabledButton}
                 >
-                    {isDisabledButton ? "Guardando..." : "Guardar"}
+                    {isDisabledButton ? <Spinner /> : "Guardar"}
                 </Button>
             </div>
         </div>
