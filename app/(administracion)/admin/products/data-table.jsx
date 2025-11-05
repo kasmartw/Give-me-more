@@ -119,7 +119,7 @@ export function DataTable({ columns, data, dataCurated, setDataCurated }) {
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Error restaurando producto ${product.id}`);
+                    throw new Error(`Error moviendo producto ${product.id}`);
                 }
                 return await response.json();
             });

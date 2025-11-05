@@ -21,6 +21,7 @@ export default function ProductOverviewPage() {
         desc: "",
         price: "",
         stock: "",
+        cost: "",
         status: "",
         visibility: "",
         img: "",
@@ -61,6 +62,7 @@ export default function ProductOverviewPage() {
                     desc: product.desc ?? "",
                     price: product.price != null ? String(product.price) : "",
                     stock: product.stock != null ? String(product.stock) : "",
+                    cost: product.cost != null ? String(product.cost) : "",
                     status: typeof product.status === "boolean" ? (product.status ? "Activo" : "Inactivo") : "",
                     visibility: product.visibility ?? "",
                     img: product.img ?? "",
@@ -74,6 +76,7 @@ export default function ProductOverviewPage() {
                     price: "",
                     stock: "",
                     status: "",
+                    cost: "",
                     visibility: "",
                     img: "",
                 });
@@ -130,6 +133,15 @@ export default function ProductOverviewPage() {
                         id="product-stock"
                         autoComplete="off"
                         value={productData.stock}
+                        disabled
+                    />
+                </Field>
+                <Field>
+                    <FieldLabel htmlFor="product-cost">Costo de envio</FieldLabel>
+                    <Input
+                        id="product-cost"
+                        autoComplete="off"
+                        value={productData.cost}
                         disabled
                     />
                 </Field>

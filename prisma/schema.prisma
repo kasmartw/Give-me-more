@@ -15,17 +15,17 @@ datasource db {
 }
 
 model Product {
-  id        Int     @id @default(autoincrement())
-  name      String  
-  price     Float
-  cost      Float
-  desc      String?
-  img       String
-  status    Boolean
-  stock     Int
-  visibility String
-  orderItem OrderItem[] 
-  shipping  Shipping[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  price         Float
+  cost          Float
+  desc          String?
+  img           String
+  status        Boolean
+  stock         Int
+  visibility    String
+  orderItem     OrderItem[]
+  shippingItems ShippingItem[]
 }
 
 model User {
@@ -48,18 +48,29 @@ model Order {
   id            Int         @id @default(autoincrement())
   date          DateTime
   total         Float
-  soldPrice     Float
   user          User       @relation(fields: [userId], references: [id])
   userId        Int
   orderItem     OrderItem[]
 }
 
 model Shipping {
-  id           Int      @id @default(autoincrement())
-  productCost  Float
-  weight       Float
-  product      Product  @relation(fields: [productId], references: [id])
-  productId    Int
+  id          Int            @id @default(autoincrement())
+  shippedAt   DateTime
+  totalItems  Int
+  totalWeight Float
+  totalCost   Float
+  items       ShippingItem[]
+}
+
+model ShippingItem {
+  id          Int      @id @default(autoincrement())
+  quantity    Int
+  unitCost    Float
+  unitWeight  Float
+  shipping    Shipping @relation(fields: [shippingId], references: [id])
+  shippingId  Int
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   Int
 }
 
 model OrderItem {

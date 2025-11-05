@@ -55,20 +55,39 @@ const productData = [
     { name: "Drone", desc: "for boys", img: "drone.jpg", price: 150.00, cost: 98.50, status: false, stock: 0, visibility: "trash" }
 ]
 
-const shippingData = [
-    { productId: 1, productCost: 11.20, weight: 0.80 },
-    { productId: 1, productCost: 11.20, weight: 1.05 },
-    { productId: 6, productCost: 27.95, weight: 0.95 },
-    { productId: 9, productCost: 78.50, weight: 5.40 },
-    { productId: 10, productCost: 22.40, weight: 1.10 },
-    { productId: 19, productCost: 58.75, weight: 1.85 },
-    { productId: 25, productCost: 24.60, weight: 2.10 },
-    { productId: 27, productCost: 15.25, weight: 1.30 },
-    { productId: 28, productCost: 8.35, weight: 0.60 },
-    { productId: 29, productCost: 13.95, weight: 0.75 },
-    { productId: 30, productCost: 98.50, weight: 3.90 },
-    { productId: 15, productCost: 11.25, weight: 0.55 }
+const shippingTemplates = [
+    {
+        shippedAt: new Date("2024-01-05T14:00:00Z"),
+        items: [
+            { productId: 1, quantity: 3, unitWeight: 0.80 },
+            { productId: 6, quantity: 2, unitWeight: 0.95 },
+            { productId: 10, quantity: 1, unitWeight: 1.10 },
+        ],
+    },
+    {
+        shippedAt: new Date("2024-02-10T09:30:00Z"),
+        items: [
+            { productId: 9, quantity: 1, unitWeight: 5.40 },
+            { productId: 15, quantity: 4, unitWeight: 0.55 },
+            { productId: 19, quantity: 2, unitWeight: 1.85 },
+        ],
+    },
+    {
+        shippedAt: new Date("2024-03-18T11:15:00Z"),
+        items: [
+            { productId: 25, quantity: 3, unitWeight: 2.10 },
+            { productId: 27, quantity: 2, unitWeight: 1.30 },
+            { productId: 28, quantity: 5, unitWeight: 0.60 },
+            { productId: 29, quantity: 2, unitWeight: 0.75 },
+            { productId: 30, quantity: 1, unitWeight: 3.90 },
+        ],
+    },
 ]
+
+const productCostById = productData.reduce((acc, product, index) => {
+    acc[index + 1] = product.cost
+    return acc
+}, {})
 
 const admins = [
     { username: "kassandra", email: "kassandra@gmail.com", role: "admin", password: "kass24" },
@@ -91,12 +110,41 @@ async function createProducts() {
 }
 
 async function createShippingRecords() {
-    if (!shippingData.length) {
+    if (!shippingTemplates.length) {
         console.log('ℹ️ No hay datos de envíos para crear')
         return
     }
 
-    await prisma.shipping.createMany({ data: shippingData, skipDuplicates: true })
+    for (const shipment of shippingTemplates) {
+        const totals = shipment.items.reduce(
+            (acc, item) => {
+                const unitCost = productCostById[item.productId] ?? 0
+                acc.totalItems += item.quantity
+                acc.totalWeight += item.quantity * item.unitWeight
+                acc.totalCost += item.quantity * unitCost
+                return acc
+            },
+            { totalItems: 0, totalWeight: 0, totalCost: 0 }
+        )
+
+        await prisma.shipping.create({
+            data: {
+                shippedAt: shipment.shippedAt,
+                totalItems: totals.totalItems,
+                totalWeight: Math.round(totals.totalWeight * 100) / 100,
+                totalCost: Math.round(totals.totalCost * 100) / 100,
+                items: {
+                    create: shipment.items.map((item) => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        unitCost: productCostById[item.productId] ?? 0,
+                        unitWeight: item.unitWeight,
+                    })),
+                },
+            },
+        })
+    }
+
     console.log('✅ Registros de envíos creados')
 }
 
@@ -128,7 +176,6 @@ function generateOrdersForUser(name) {
             return [
                 {
                     total: 100,
-                    soldPrice: 94.5,
                     date: new Date("2024-01-15T10:00:00Z"),
                     orderItem: {
                         create: [
@@ -142,7 +189,6 @@ function generateOrdersForUser(name) {
             return [
                 {
                     total: 180,
-                    soldPrice: 175.0,
                     date: new Date("2024-02-03T09:30:00Z"),
                     orderItem: {
                         create: [
@@ -156,7 +202,6 @@ function generateOrdersForUser(name) {
             return [
                 {
                     total: 220,
-                    soldPrice: 210.0,
                     date: new Date("2024-03-20T14:15:00Z"),
                     orderItem: {
                         create: [
@@ -167,7 +212,6 @@ function generateOrdersForUser(name) {
                 },
                 {
                     total: 60,
-                    soldPrice: 57.5,
                     date: new Date("2024-03-28T11:45:00Z"),
                     orderItem: {
                         create: [
@@ -180,7 +224,6 @@ function generateOrdersForUser(name) {
             return [
                 {
                     total: 95,
-                    soldPrice: 90.0,
                     date: new Date("2024-04-07T16:20:00Z"),
                     orderItem: {
                         create: [

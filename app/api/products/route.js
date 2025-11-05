@@ -42,33 +42,24 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     console.log("post")
-    const { action, name, desc, img, price, stock, status, visibility } = await request.json();
+    const { action, name, desc, img, price, stock, status, visibility, cost } = await request.json();
     const priceFloat = Number(price);
-    const statusBool = typeof status === 'boolean' ? status : (status === 'active');
-    const stockInt = parseInt(stock);
+    const stockInt = Number.parseInt(stock);
+    const costFloat = Number(cost);
+    const statusBool = typeof status === 'boolean' ? status : status === "active";
 
 
-    if (action == "create") {
+    if (action === "create") {
       console.log("create")
 
-      if (isValidProduct(name, desc, img, priceFloat, statusBool, stockInt)) {
-        console.log("es valido")
-        await createProduct(name, desc, img, priceFloat, statusBool, stockInt, visibility);
-        console.log("se creo")
-        return NextResponse.json({ status: 201 });
-      } else {
+      if (!isValidProduct(name, desc, img, priceFloat, statusBool, stockInt, costFloat)) {
         return new Response('Invalid product data', { status: 400 });
       }
-    } else if (action == "moveToTrash") {
-      console.log("moveToTrash")
-      if (isValidProduct(name, desc, img, priceFloat, statusBool, stockInt)) {
-        console.log("es valido")
-        await MoveToTrash(name, desc, img, priceFloat, statusBool, stockInt);
-        console.log("se movio")
-        return NextResponse.json({ status: 201 });
-      } else {
-        return new Response('Invalid product data', { status: 400 });
-      }
+
+      console.log("es valido")
+      await createProduct(name, desc, img, priceFloat, statusBool, stockInt, costFloat, visibility);
+      console.log("se creo")
+      return NextResponse.json({ status: 201 });
     } else {
       return new Response('Invalid action', { status: 400 });
     }
@@ -82,7 +73,7 @@ export async function PATCH(request) {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.getAll("id")
   const idsInt = ids.map((id) => parseInt(id))
-  const { action, name, desc, img, price, status, stock, visibility } = await request.json();
+  const { action, name, desc, img, price, status, stock, cost, visibility } = await request.json();
   if (action == "status") {
     try {
       const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
@@ -108,14 +99,31 @@ export async function PATCH(request) {
     try {
       const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
 
-      const priceFloat = parseFloat(price);
-      const stockInt = parseInt(stock);
-              if (!idList.every((id) => typeof id === "number") || typeof name !== 'string' || typeof desc !== 'string' || typeof img !== 'string' || typeof priceFloat !== 'number') {
-                return new Response('Invalid product data', { status: 400 });
-              }
-              for (const id of idList) {
-                console.log("ahora vamos a db")
-                await updateProduct(id, name, desc, img, priceFloat, stockInt, visibility);      }
+      const priceFloat = Number(price);
+      const stockInt = Number.parseInt(stock);
+      const costFloat = Number(cost);
+
+      if (!idList.every((id) => typeof id === "number")
+        || typeof name !== 'string'
+        || typeof desc !== 'string'
+        || typeof img !== 'string'
+        || !Number.isFinite(priceFloat)
+        || !Number.isFinite(stockInt)) {
+        return new Response('Invalid product data', { status: 400 });
+      }
+      for (const id of idList) {
+        console.log("ahora vamos a db")
+        await updateProduct(
+          id,
+          name,
+          desc,
+          img,
+          priceFloat,
+          stockInt,
+          Number.isFinite(costFloat) ? costFloat : undefined,
+          visibility,
+        );
+      }
       return NextResponse.json({ message: "Product updated" }, { status: 200 });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unexpected exception"
@@ -126,13 +134,25 @@ export async function PATCH(request) {
     console.log("move")
     try {
       const idList = Array.isArray(idsInt) ? idsInt : [idsInt];
+      const priceFloat = Number(price);
+      const stockInt = Number.parseInt(stock);
+      const costFloat = Number(cost);
 
       if (!idList.every((id) => typeof id === "number") || typeof action !== 'string') {
         return new Response('Invalid product data', { status: 400 });
       }
       for (const id of idList) {
         console.log("ahora vamos a db")
-        await updateProduct(id, name, desc, img, price, stock, visibility);
+        await updateProduct(
+          id,
+          name,
+          desc,
+          img,
+          Number.isFinite(priceFloat) ? priceFloat : 0,
+          Number.isFinite(stockInt) ? stockInt : 0,
+          Number.isFinite(costFloat) ? costFloat : undefined,
+          visibility,
+        );
       }
       return NextResponse.json({ message: "Product updated" }, { status: 200 });
     } catch (error) {

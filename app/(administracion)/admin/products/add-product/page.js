@@ -20,28 +20,52 @@ export default function AddProductPage() {
         img: '',
         price: '',
         stock: '',
+        cost: '',
         status: true
     })
     const [isDisabledButton, setIsDisabledButton] = useState(false)
     const [notification, setNotification] = useState(null);
 
+    function resetForm() {
+        setValues({
+            name: '',
+            desc: '',
+            img: '',
+            price: '',
+            stock: '',
+            cost: '',
+            status: true,
+        })
+    }
+
+    const toPositiveNumber = (value) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && parsed >= 0 ? parsed : NaN;
+    };
+
+    const toPositiveInteger = (value) => {
+        const parsed = Number(value);
+        return Number.isInteger(parsed) && parsed >= 0 ? parsed : NaN;
+    };
 
     async function addNewProduct() {
-        setIsDisabledButton(true);
-        const priceFloat = parseFloat(values.price)
-        const stockInt = parseInt(values.stock)
-        if (isNaN(priceFloat) || isNaN(stockInt)) {
-            alert("Precio o inventario inválido");
-            setIsDisabledButton(false);
-            return;
-        } else if (!isValidProduct(values.name, values.desc, values.img, priceFloat)) {
-            alert("Datos inválidos");
-            setIsDisabledButton(false);
-            return;
+        setNotification(null)
+        const priceFloat = toPositiveNumber(values.price)
+        const stockInt = toPositiveInteger(values.stock)
+        const costFloat = toPositiveNumber(values.cost)
+
+        if (!Number.isFinite(priceFloat) || !Number.isFinite(stockInt) || !Number.isFinite(costFloat)) {
+            setNotification({ type: 'error', message: 'Precio, costo o inventario inválido.' })
+            return
         }
 
-        try {
+        if (!isValidProduct(values.name, values.desc, values.img, priceFloat, values.status, stockInt, costFloat)) {
+            setNotification({ type: 'error', message: 'Verifica los datos antes de publicar.' })
+            return
+        }
 
+        setIsDisabledButton(true)
+        try {
             const res = await fetch('/api/products', {
                 method: 'POST',
                 headers: {
@@ -49,49 +73,47 @@ export default function AddProductPage() {
                 },
                 body: JSON.stringify({
                     action: "create",
-                    name: values.name,
+                    name: values.name.trim(),
                     desc: values.desc,
-                    img: values.img,
+                    img: values.img.trim(),
                     price: priceFloat,
                     stock: stockInt,
                     status: values.status,
-                    visibility: "public"
+                    cost: costFloat,
+                    visibility: "public",
                 }),
-            });
+            })
 
             if (res.ok) {
-                setValues({
-                    name: '',
-                    desc: '',
-                    img: '',
-                    price: '',
-                    stock: '',
-                    status: true
-                });
-                setIsDisabledButton(false);
-                setNotification({ type: 'success', message: 'Producto agregado exitosamente.' });
+                resetForm()
+                setNotification({ type: 'success', message: 'Producto agregado exitosamente.' })
             } else {
-                setIsDisabledButton(false);
-                setNotification({ type: 'error', message: 'Error al agregar el producto.' });
+                setNotification({ type: 'error', message: 'Error al agregar el producto.' })
             }
         } catch (error) {
-            setNotification({ type: 'error', message: 'Error de red al agregar el producto.' });
-            setIsDisabledButton(false);
+            console.error(error)
+            setNotification({ type: 'error', message: 'Error de red al agregar el producto.' })
+        } finally {
+            setIsDisabledButton(false)
         }
-    };
+    }
 
     async function saveNewProduct() {
-        const priceFloat = parseFloat(values.price)
-        const stockInt = parseInt(values.stock)
-        let price = isNaN(priceFloat) ? 0 : priceFloat
-        let stock = isNaN(stockInt) ? 0 : stockInt
-        let name = values.name = true ? values.name : "Nombre del producto"
-        let desc = values.desc = true ? values.desc : "Descripción del producto"
-        let img = values.img = true ? values.img : "URL de la imagen del producto"
-        setIsDisabledButton(true);
+        setNotification(null)
+        const priceFloat = toPositiveNumber(values.price)
+        const rawStockInt = toPositiveInteger(values.stock)
+        const stockInt = Number.isNaN(rawStockInt) ? 0 : rawStockInt
+        const costFloat = toPositiveNumber(values.cost)
 
+        const name = values.name.trim() || "Nombre del producto"
+        const desc = values.desc || "Descripción del producto"
+        const img = values.img.trim() || "URL de la imagen del producto"
+        const price = Number.isFinite(priceFloat) ? priceFloat : 0
+        const stock = Number.isFinite(stockInt) ? stockInt : 0
+        const cost = Number.isFinite(costFloat) ? costFloat : 0
+
+        setIsDisabledButton(true)
         try {
-
             const res = await fetch('/api/products', {
                 method: 'POST',
                 headers: {
@@ -105,30 +127,24 @@ export default function AddProductPage() {
                     price,
                     stock,
                     status: values.status,
-                    visibility: "draft"
+                    cost,
+                    visibility: "draft",
                 }),
-            });
+            })
 
             if (res.ok) {
-                setValues({
-                    name: '',
-                    desc: '',
-                    img: '',
-                    price: '',
-                    stock: '',
-                    status: true
-                });
-                setIsDisabledButton(false);
-                setNotification({ type: 'success', message: 'Producto guardado exitosamente.' });
+                resetForm()
+                setNotification({ type: 'success', message: 'Producto guardado exitosamente.' })
             } else {
-                setIsDisabledButton(false);
-                setNotification({ type: 'error', message: 'Error al guardar el producto.' });
+                setNotification({ type: 'error', message: 'Error al guardar el producto.' })
             }
         } catch (error) {
-            setNotification({ type: 'error', message: 'Error de red al guardar el producto.' });
-            setIsDisabledButton(false);
+            console.error(error)
+            setNotification({ type: 'error', message: 'Error de red al guardar el producto.' })
+        } finally {
+            setIsDisabledButton(false)
         }
-    };
+    }
 
     return (
         <div className="space-y-8">
@@ -191,6 +207,15 @@ export default function AddProductPage() {
                         />
                     </Field>
                     <Field>
+                        <FieldLabel htmlFor="cost">Costo del producto</FieldLabel>
+                        <Input
+                            id="cost"
+                            value={values.cost}
+                            onChange={(e) => setValues({ ...values, cost: e.target.value })}
+                            placeholder="0.00"
+                        />
+                    </Field>
+                    <Field>
                         <FieldLabel htmlFor="stock">Inventario</FieldLabel>
                         <Input
                             id="stock"
@@ -215,11 +240,25 @@ export default function AddProductPage() {
             </FieldSet>
 
             <div className="flex flex-wrap gap-3">
-                <Button onClick={() => addNewProduct()} disabled={isDisabledButton}>
-                    {isDisabledButton ? <Spinner /> : "Publicar"}
+                <Button onClick={addNewProduct} disabled={isDisabledButton}>
+                    {isDisabledButton ? (
+                        <>
+                            <Spinner className="mr-2" />
+                            Publicando...
+                        </>
+                    ) : (
+                        "Publicar"
+                    )}
                 </Button>
-                <Button onClick={() => saveNewProduct()} type="button" variant="outline" disabled={isDisabledButton}>
-                    Guardar como borrador
+                <Button onClick={saveNewProduct} type="button" variant="outline" disabled={isDisabledButton}>
+                    {isDisabledButton ? (
+                        <>
+                            <Spinner className="mr-2" />
+                            Guardando...
+                        </>
+                    ) : (
+                        "Guardar como borrador"
+                    )}
                 </Button>
             </div>
         </div>
